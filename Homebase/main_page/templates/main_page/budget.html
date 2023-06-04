@@ -1,0 +1,29 @@
+{% extends "main_page/index.html" %}
+
+{% block main_content %}
+<div id="budget_page">
+    <div id="salary_savings">
+        <div class="salary_savings_modal">
+            <p>Salary</p>
+            <input type="text" id="budget_salary" value={{salary}}>
+        </div>
+        <div class="salary_savings_modal">
+            <p>Savings</p>
+            <input type="text" id="budget_savings" value={{savings}}>
+        </div>
+        <div class="salary_savings_modal">
+            <button onclick="get_budget()">Update Amounts</button>
+        </div>
+    </div>
+    <div id="budget_table_row">
+        {% for obj in budget %}
+            <div id="week_modal" class="budget_week_modal">
+                <p class="week_number">Week {{obj.week}}</p>
+                <p class="date_range">{{obj.dates}}</p>
+                <hr>
+                <p class="week_amount">€{{obj.amount}}</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

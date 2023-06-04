@@ -1,0 +1,15 @@
+<html>
+    {% csrf_token %}
+    <head>
+        {% load static %}
+        <link rel="stylesheet" href="{% static 'main_page/main.css' %}">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="{% static 'main_page/requests.js' %}"></script>
+        <script src="{% static 'main_page/budget_jquery.js' %}"></script>
+    </head>
+    <body>
+        {% include 'main_page/top_bar.html' %}
+        {% block main_content %}
+        {% endblock %}
+    </body>
+</html>
