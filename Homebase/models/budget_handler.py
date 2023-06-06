@@ -31,6 +31,19 @@ class BudgetHandler:
         df = pd.DataFrame(data, columns=columns)
         return df
 
+    def get_current_month_from_history_df(self, df, date, icon_dict):
+        print(icon_dict)
+        current_month = df.loc[df["date"] == str(date)].to_dict()
+        final_list = []
+        for key, vector in current_month.items():
+            if key == "_id" or key == "date" or list(vector.values())[0] == 0:
+                continue
+            final_list.append({"name": key,
+                               "amount": list(vector.values())[0],
+                               "icon": icon_dict.get(key, "")})
+
+        return final_list
+
     def get_current_spending(self, df, current_month):
         df_dict = df.loc[df["date"] == str(current_month)].to_dict()
         total_spending = 0
@@ -139,9 +152,14 @@ class BudgetHandler:
         res = self.mongo_handler.get_budget_history()
         df = self.res_dictionary_to_df(res)
 
-        current_month = str(datetime.today().date().replace(day=1))
+        current_month_date = str(datetime.today().date().replace(day=1))
 
-        total_spending = self.get_current_spending(df, current_month)
+        icon_images = self.mongo_handler.get_budget_icons()
+
+        current_month = self.get_current_month_from_history_df(
+            df, current_month_date, icon_images)
+
+        total_spending = self.get_current_spending(df, current_month_date)
 
         net_salary = round(self.salary - total_spending, 2) - self.savings
 
@@ -160,7 +178,9 @@ class BudgetHandler:
                 "remaining_days": vector.get("remaining_days"),
                 "week": str(index + 1)
             })
+
         return {
             "week_dict": week_dict,
-            "total_spending": total_spending
+            "total_spending": total_spending,
+            "current_month_categories": current_month
         }

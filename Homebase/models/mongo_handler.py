@@ -9,8 +9,10 @@ class MongoHandler:
         self.client = pymongo.MongoClient(conn_str)
 
         self.db_name = "Homebase"
+
         self.budget_history_collection = "budget_history"
         self.budget_current_week = "budget_current_week"
+        self.budget_icons = "budget_icons"
 
     def update_budget_history(self, history):
         self.delete_collection(self.db_name, self.budget_history_collection)
@@ -42,6 +44,12 @@ class MongoHandler:
         history = self.get_collection(
             self.db_name, self.budget_current_week)
         return self.structure_budget_history(history)
+
+    def get_budget_icons(self):
+        icons_dict = self.get_collection(
+            self.db_name, self.budget_icons
+        )
+        return list(icons_dict)[0]
 
     def insert_value(self, db, collection, values):
         assert isinstance(values, list), "Values must be in list"

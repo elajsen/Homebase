@@ -35,11 +35,12 @@ def budget(request):
         # current_budget = list(mongo_handler.get_budget_current_week())
         current_budget = budget_handler.get_monthly_budget()
 
-    print(current_budget)
+    print(current_budget.get("current_month_categories"))
     context = {
         "budget": current_budget.get("week_dict"),
+        "total_spending": current_budget.get("total_spending"),
+        "current_month_spending": current_budget.get("current_month_categories"),
         "salary": budget_handler.salary,
         "savings": budget_handler.savings,
-        "total_spending": current_budget.get("total_spending")
     }
     return render(request, "main_page/budget.html", context)

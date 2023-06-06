@@ -2,23 +2,36 @@
 
 {% block main_content %}
 <div id="budget_page">
-    <div id="salary_savings">
-        <div class="salary_savings_modal">
-            <p>Salary</p>
-            <input type="text" id="budget_salary" value={{salary}}>
+    <div id="top_part">
+        <div id="salary_savings" class="modal">
+            <div class="salary_savings_modal">
+                <p>Salary</p>
+                <input type="text" id="budget_salary" value={{salary}}>
+            </div>
+            <div class="salary_savings_modal">
+                <p id="savings_text">Savings</p>
+                <input type="text" id="budget_savings" value={{savings}}>
+            </div>
+            <div class="salary_savings_modal">
+                <button onclick="update_budget_history()">Update History</button>
+                <button onclick="update_monthly_budget()">Update Month</button>
+            </div>
         </div>
-        <div class="salary_savings_modal">
-            <p id="savings_text">Savings</p>
-            <input type="text" id="budget_savings" value={{savings}}>
-        </div>
-        <div class="salary_savings_modal">
-            <button onclick="update_budget_history()">Update History</button>
-            <button onclick="update_monthly_budget()">Update Month</button>
+        <div id="current_month_categories" class="modal">
+            <ul id="cat_list">
+            {% for category in current_month_spending %}
+                <li class="category_item">
+                    <img src="{{ MEDIA_URL }}{{ category.icon }}" alt="" title="{{ category.name }}">
+                    <!--<p>{{ category.name }}: </p>-->
+                    <p>€{{ category.amount }}</p>
+                </li>
+            {% endfor %}
+            </ul>
         </div>
     </div>
     <div id="budget_table_row" total_spending = "{{total_spending}}">
         {% for obj in budget %}
-            <div id="week_modal_{{obj.week}}" class="budget_week_modal" remaining_days="{{obj.remaining_days}}">
+            <div id="week_modal_{{obj.week}}" class="budget_week_modal modal" remaining_days="{{obj.remaining_days}}">
                 <p class="week_number">Week {{obj.week}}</p>
                 <p class="date_range">{{obj.dates}}</p>
                 <hr>
