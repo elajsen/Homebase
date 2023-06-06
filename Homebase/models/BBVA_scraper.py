@@ -156,6 +156,9 @@ class BBVAScraper:
         return res
 
     def get_current_month_categories(self):
+        self.driver = self.get_driver(self.headless)
+        self.driver.get("https://www.bbva.es/")
+
         self.log_in()
 
         tries = 0

@@ -13,8 +13,8 @@ function getCookie(name) {
     return cookieValue;
   }
 
-function get_budget(){
-    console.log("Getting budget history")
+function update_budget_history(){
+    console.log("Updating budget history")
     const csrftoken = getCookie("csrftoken");
 
     $.ajaxSetup({
@@ -27,7 +27,32 @@ function get_budget(){
         url: "/budget",
         method: "POST",
         data: {
-            "type": "update_budget"
+            "type": "update_budget_history"
+        },
+        success: function(response){
+            console.log("SUCCESS")
+        },
+        error: function(xhr, status, error){
+            console.log(xhr)
+        }
+    });
+}
+
+function update_monthly_budget(){
+  console.log("Updating Monthly Budget")
+    const csrftoken = getCookie("csrftoken");
+
+    $.ajaxSetup({
+        headers: {
+            "X-CSRFToken": csrftoken
+        }
+    });
+
+    $.ajax({
+        url: "/budget",
+        method: "POST",
+        data: {
+            "type": "update_monthly_budget"
         },
         success: function(response){
             console.log("SUCCESS")

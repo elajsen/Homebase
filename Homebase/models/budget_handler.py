@@ -1,4 +1,5 @@
 from models.BBVA_scraper import BBVAScraper
+from models.mongo_handler import MongoHandler
 import pandas as pd
 import re
 import time
@@ -9,6 +10,7 @@ from dateutil.relativedelta import relativedelta
 class BudgetHandler:
     def __init__(self):
         self.bbva_scraper = BBVAScraper(headless=False)
+        self.mongo_handler = MongoHandler()
         self.salary = 1733.84
         self.savings = 100
 
@@ -30,16 +32,16 @@ class BudgetHandler:
         return df
 
     def get_current_spending(self, df, current_month):
-        df_dict = df.loc[df["date"] == current_month].to_dict()
+        df_dict = df.loc[df["date"] == str(current_month)].to_dict()
         total_spending = 0
         for key, item in df_dict.items():
-            if key == "date":
+            if key == "date" or key == "_id":
                 continue
             elif key in ["Ingreso Bizum", "other income"]:
-                total_spending -= item.get(0)
+                total_spending -= list(item.values())[0]
             else:
-                total_spending += item.get(0)
-        return total_spending
+                total_spending += list(item.values())[0]
+        return round(total_spending, 2)
 
     def get_weeks_in_month(self, month=None):
         weeks = []
@@ -73,55 +75,92 @@ class BudgetHandler:
 
         return weeks
 
-    def get_remaining_months(self, weeks_in_month):
+    def get_remaining_weeks(self, weeks_in_month):
         current_date = datetime.today().date()
 
         remaining_weeks = []
 
         for week in weeks_in_month:
-            if week[-1] < current_date:
-                continue
-            elif week[0] < current_date:
-                remaining_weeks.append([current_date, week[-1]])
+            if current_date < week[0]:
+                remaining_days = 7
+            elif current_date > week[-1]:
+                remaining_days = 0
             else:
-                remaining_weeks.append(week)
+                remaining_days = (week[-1] - current_date).days
 
+            remaining_weeks.append({
+                "dates": week,
+                "remaining_days": remaining_days
+            })
         return remaining_weeks
 
     def get_weekly_budget(self, net_salary, remaining_weeks):
-        remaining_days = []
-        for week in remaining_weeks:
-            remaining_days.append((week[-1] - week[0]).days + 1)
+        total_days = sum([x_sub.get("remaining_days")
+                         for x_sub in remaining_weeks])
 
-        total_days = sum(remaining_days)
-        weekly_budget = [round(days * (net_salary / total_days), 2)
-                         for days in remaining_days]
-        return weekly_budget
+        for week in remaining_weeks:
+            week["amount"] = round(
+                (net_salary / total_days) * week.get("remaining_days"), 2)
+
+        return remaining_weeks
+
+    def update_backlog(self):
+        res_dictionary = self.bbva_scraper.get_backlog_month_categories()
+
+        self.mongo_handler.update_budget_history(res_dictionary)
+
+    def update_monthly_budget(self):
+
+        current_month_date = datetime.today().date().replace(day=1)
+
+        new_current_month = self.bbva_scraper.get_current_month_categories()
+        new_current_month["date"] = str(current_month_date)
+
+        old_current_month_object = list(self.mongo_handler.search_collection(
+            self.mongo_handler.db_name,
+            self.mongo_handler.budget_history_collection,
+            {"date": str(current_month_date)}
+        ))
+
+        self.mongo_handler.delete_values(
+            self.mongo_handler.db_name,
+            self.mongo_handler.budget_history_collection,
+            {"_id": old_current_month_object[0].get("_id")}
+        )
+
+        self.mongo_handler.insert_value(
+            self.mongo_handler.db_name,
+            self.mongo_handler.budget_history_collection,
+            [new_current_month]
+        )
 
     def get_monthly_budget(self):
         print("Get Monthly Budget")
-        res_dictionary = self.bbva_scraper.get_backlog_month_categories()
+        res = self.mongo_handler.get_budget_history()
+        df = self.res_dictionary_to_df(res)
 
-        df = self.res_dictionary_to_df(res_dictionary)
-
-        current_month = "2023-06-01"
+        current_month = str(datetime.today().date().replace(day=1))
 
         total_spending = self.get_current_spending(df, current_month)
 
         net_salary = round(self.salary - total_spending, 2) - self.savings
 
         weeks_in_month = self.get_weeks_in_month()
-
-        remaining_weeks = self.get_remaining_months(weeks_in_month)
+        remaining_weeks = self.get_remaining_weeks(weeks_in_month)
 
         budget_amounts = self.get_weekly_budget(net_salary, remaining_weeks)
 
-        structured_weeks = [[str(x[0]), str(x[1])] for x in remaining_weeks]
-
-        final_dict = {}
-        for index, (dates, budget) in enumerate(zip(structured_weeks, budget_amounts)):
-            final_dict[str(index + 1)] = {
-                "dates": dates,
-                "amount": budget
-            }
-        return final_dict
+        week_dict = []
+        for index, vector in enumerate(budget_amounts):
+            structured_date_range = str(vector.get(
+                "dates")[0]) + "-" + str(vector.get("dates")[0])
+            week_dict.append({
+                "dates": structured_date_range,
+                "amount": vector.get("amount"),
+                "remaining_days": vector.get("remaining_days"),
+                "week": str(index + 1)
+            })
+        return {
+            "week_dict": week_dict,
+            "total_spending": total_spending
+        }

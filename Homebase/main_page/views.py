@@ -23,24 +23,23 @@ def budget(request):
         print("Post request")
         data = request.POST
 
-        if data.get("type") == "update_budget":
-            budget = budget_handler.get_monthly_budget()
-            mongo_handler.update_budget_current_week(budget)
+        if data.get("type") == "update_budget_history":
+            budget_handler.update_backlog()
+        elif data.get("type") == "update_monthly_budget":
+            budget_handler.update_monthly_budget()
+
+        current_budget = list(mongo_handler.get_budget_current_week())
 
     elif request.method == "GET":
         print("Get request")
-        history = list(mongo_handler.get_budget_current_week())
-        print(history)
+        # current_budget = list(mongo_handler.get_budget_current_week())
+        current_budget = budget_handler.get_monthly_budget()
 
+    print(current_budget)
     context = {
-        "budget": history,
+        "budget": current_budget.get("week_dict"),
         "salary": budget_handler.salary,
         "savings": budget_handler.savings,
-        "test_objects": [
-            {"value": 1},
-            {"value": 2},
-            {"value": 3},
-            {"value": 4},
-        ]
+        "total_spending": current_budget.get("total_spending")
     }
     return render(request, "main_page/budget.html", context)

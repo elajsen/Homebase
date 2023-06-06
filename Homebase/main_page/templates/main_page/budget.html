@@ -8,20 +8,21 @@
             <input type="text" id="budget_salary" value={{salary}}>
         </div>
         <div class="salary_savings_modal">
-            <p>Savings</p>
+            <p id="savings_text">Savings</p>
             <input type="text" id="budget_savings" value={{savings}}>
         </div>
         <div class="salary_savings_modal">
-            <button onclick="get_budget()">Update Amounts</button>
+            <button onclick="update_budget_history()">Update History</button>
+            <button onclick="update_monthly_budget()">Update Month</button>
         </div>
     </div>
-    <div id="budget_table_row">
+    <div id="budget_table_row" total_spending = "{{total_spending}}">
         {% for obj in budget %}
-            <div id="week_modal" class="budget_week_modal">
+            <div id="week_modal_{{obj.week}}" class="budget_week_modal" remaining_days="{{obj.remaining_days}}">
                 <p class="week_number">Week {{obj.week}}</p>
                 <p class="date_range">{{obj.dates}}</p>
                 <hr>
-                <p class="week_amount">€{{obj.amount}}</p>
+                <p id="week_amount_{{obj.week}}" class="week_amount">€{{obj.amount}}</p>
             </div>
         {% endfor %}
     </div>
