@@ -18,8 +18,9 @@
             </div>
         </div>
         <div id="current_month_categories" class="modal">
+            <p>Current Month Spending</p>
             <ul id="cat_list">
-            {% for category in current_month_spending %}
+            {% for category in current_month_spending.spending %}
                 <li class="category_item">
                     <img src="{{ MEDIA_URL }}{{ category.icon }}" alt="" title="{{ category.name }}">
                     <!--<p>{{ category.name }}: </p>-->
@@ -27,6 +28,27 @@
                 </li>
             {% endfor %}
             </ul>
+        </div>
+        <div id="current_month_categories" class="modal">
+            <p>Current Month Income</p>
+            <ul id="cat_list">
+            {% for category in current_month_spending.income %}
+                <li class="category_item">
+                    <img src="{{ MEDIA_URL }}{{ category.icon }}" alt="" title="{{ category.name }}">
+                    <!--<p>{{ category.name }}: </p>-->
+                    <p>€{{ category.amount }}</p>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        <div id="bill_modal" class="modal">
+            {% for bill in bills %}
+            <div id="bill_line" class="">
+                <p>{{ bill.page }}</p>
+                <p>{{ bill.date }}</p>
+                <p>{{ bill.amount }}</p>
+            </div>
+            {% endfor %}
         </div>
     </div>
     <div id="budget_table_row" total_spending = "{{total_spending}}">

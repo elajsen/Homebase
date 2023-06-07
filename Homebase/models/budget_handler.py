@@ -147,6 +147,23 @@ class BudgetHandler:
             [new_current_month]
         )
 
+    def divide_spending_and_income(self, month_dict):
+        spending = []
+        income = []
+        for vector in month_dict:
+            if vector.get("name") == "_id":
+                continue
+            elif vector.get("name") in ["Ingreso Bizum",
+                                        "Pendiente de categorizar ingresos",
+                                        "other income"]:
+                income.append(vector)
+            else:
+                spending.append(vector)
+        return {
+            "income": income,
+            "spending": spending
+        }
+
     def get_monthly_budget(self):
         print("Get Monthly Budget")
         res = self.mongo_handler.get_budget_history()
@@ -158,6 +175,7 @@ class BudgetHandler:
 
         current_month = self.get_current_month_from_history_df(
             df, current_month_date, icon_images)
+        spending_and_income = self.divide_spending_and_income(current_month)
 
         total_spending = self.get_current_spending(df, current_month_date)
 
@@ -182,5 +200,5 @@ class BudgetHandler:
         return {
             "week_dict": week_dict,
             "total_spending": total_spending,
-            "current_month_categories": current_month
+            "current_month_categories": spending_and_income
         }
