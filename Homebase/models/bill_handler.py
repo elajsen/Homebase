@@ -46,11 +46,15 @@ class PageHandlerParent:
         dates = self.get_date_from_db()
 
         current_month_bills = []
+
+        budget_icons = self.mongo_handler.get_budget_icons()
+
         for date, amount in dates.items():
             formated_date = self.str_to_date(date)
             if formated_date.month == today.month and formated_date > today:
                 current_month_bills.append(
-                    {"page": self.page, "date": date, "amount": amount})
+                    {"page": self.page, "date": date,
+                     "amount": amount, "icon": budget_icons.get(self.page)})
         return current_month_bills
 
 

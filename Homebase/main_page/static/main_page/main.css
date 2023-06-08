@@ -1,9 +1,18 @@
-.top_bar{
+body{
     display: flex;
     flex-direction: row;
+
+    font-family: 'Oswald', sans-serif;
+    font-weight: lighter;
+}
+
+.top_bar{
+    display: flex;
+    flex-direction: column;
     justify-content: space-around;
     align-items: center;
-    height: 10%;
+    width: 7%;
+    background-color: rgb(182 203 158);
 }
 
 .top_bar_text{
@@ -15,98 +24,172 @@
     cursor: pointer;
 }
 
+/*
 .modal{
     box-shadow:  3px 3px 2px 2px rgba(0,0,0,0.5);
     border-radius: 5%;
     margin:1em;
     padding:1em;
-}
+}*/
 
 /*---- BUDGET PAGE ----*/
-#top_part{
-    display:flex;
-    flex-direction: row;
-}
-
 #budget_page{
     display: flex;
     flex-direction: column;
+    padding: 2em;
+    width:100%;
 }
 
-#salary_savings{
+/*---- TOP PART ----*/
+#top-part{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/*---- OVERVIEW ----*/
+#overview{
+    display: flex;
+    flex-direction: column;
+    margin-left:1em;
+}
+
+#overview-text{
+    text-decoration: underline;
+}
+
+#saving_salary{
+    display: flex;
+    flex-direction: row;
+}
+
+#salary-saving-texts{
+    margin-right:2em;
+}
+
+.overview_salary_save{
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    padding: 1.5em;
-    height: 10%;
-    width: 30%;
 }
 
-.salary_savings_modal{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    margin:0.5em;
+.overview_salary_save input{
+    height:1.5em;
+    width:50%;
+    border: none;
 }
 
-.salary_savings_modal input{
-    display: flex;
-    width: 75%;
-    height: 2.5em;
-    margin: 0em;
-}
-
-/*---- CURRENT MONTH CATEGORIES -----*/
-#current_month_categories{
-    display:flex;
-    flex-direction: column;
-    padding: 1em;
-}
-
-#cat_list{
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    /*height: 20%;*/
-}
-
-.category_item{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-
-.category_item img{
-    width:2em;
-    height:2em;
-}
-
-.category_item p{
-    margin: 0.5em 1em 0.5em 1em
-}
-
-/*---- BUDGET MODALS ----*/
-#budget_table_row{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 1em;
-}
-
-.budget_week_modal{
-    background-color: rgba(255 255 255);
-    height: 5%;
-    width: 15%;
-    padding: 1em;
-}
-
-.week_number, .date_range{
+.small{
     font-size: 0.8em;
-    font-weight: bold;
 }
 
-.week_amount{
-    font-size: 1.5em;
-    margin:0.5em;
+.medium{
+    font-size: 1em;
+    margin:0;
+}
+
+.xlarge{
+    font-size: 2em;
+    margin:0;
+}
+
+.grey-text{
+    color: rgb(112 112 112)
+}
+
+/*---- UPDATE ----*/
+#update{
+    display: flex;
+    align-items: center;
+}
+
+/*---- BUDGET MODAL SECTION ----*/
+.modal{
+    background-color: rgb(248 248 248);
+    border-radius: 5%;
+    padding:1em;
+    margin:1em;
+    width:100%;
+}
+
+#budget-modal-section{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.budget_modal{
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    padding:1em;
+    width:100%;
+    margin:1em;
+}
+
+.budget_modal p{
+    margin:0.4em;
+}
+
+/*---- SPENDING INCOME----*/
+.spending-income-bill-modal{
+    display: flex;
+    flex-direction: row;
+    width:100%;
+}
+
+#spending-income-bills-section{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.spending-cat-item{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+}
+
+.spending-cat-item img{
+    margin-right: 1em;
+}
+
+.spending-saving-icon{
+    width:1.5em;
+    height:1.5em;
+}
+
+#spending-income-bills-section{
+    display: flex;
+    flex-direction: row;
+}
+
+.graph-div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/*---- BILLS----*/
+#bill-check{
+    display: flex;
+    flex-direction: row;
+}
+
+.bill-icon{
+    height:2em;
+    width:2em;
+}
+
+.bill-item{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bill-item-text{
+    display: flex;
+    flex-direction: column;
 }

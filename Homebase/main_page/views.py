@@ -31,12 +31,15 @@ def budget(request):
             budget_handler.update_monthly_budget()
 
         current_budget = budget_handler.get_monthly_budget()
+        monthly_bills = bill_handler.get_dates()
 
     elif request.method == "GET":
         print("Get request")
         # current_budget = list(mongo_handler.get_budget_current_week())
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
+
+    print(current_budget.get("bills"),)
 
     context = {
         "budget": current_budget.get("week_dict"),

@@ -2,64 +2,84 @@
 
 {% block main_content %}
 <div id="budget_page">
-    <div id="top_part">
-        <div id="salary_savings" class="modal">
-            <div class="salary_savings_modal">
-                <p>Salary</p>
-                <input type="text" id="budget_salary" value={{salary}}>
-            </div>
-            <div class="salary_savings_modal">
-                <p id="savings_text">Savings</p>
-                <input type="text" id="budget_savings" value={{savings}}>
-            </div>
-            <div class="salary_savings_modal">
-                <button onclick="update_budget_history()">Update History</button>
-                <button onclick="update_monthly_budget()">Update Month</button>
+    <div id="top-part">
+        <div id="overview">
+            <p id="overview-text" class="h3">Overview</h3>
+            <div id="saving_salary">
+                <div id="salary-saving-texts" class="overview_salary_save">
+                    <p class="small grey-text">Salary</p>
+                    <p class="small grey-text">Savings</p>
+                </div>
+                <div class="overview_salary_save">
+                    <input id="budget_salary" type="text" value="{{ salary }}">
+                    <input id="budget_savings" type="text" value="{{ savings }}">
+                </div>
             </div>
         </div>
-        <div id="current_month_categories" class="modal">
-            <p>Current Month Spending</p>
-            <ul id="cat_list">
-            {% for category in current_month_spending.spending %}
-                <li class="category_item">
-                    <img src="{{ MEDIA_URL }}{{ category.icon }}" alt="" title="{{ category.name }}">
-                    <!--<p>{{ category.name }}: </p>-->
-                    <p>€{{ category.amount }}</p>
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
-        <div id="current_month_categories" class="modal">
-            <p>Current Month Income</p>
-            <ul id="cat_list">
-            {% for category in current_month_spending.income %}
-                <li class="category_item">
-                    <img src="{{ MEDIA_URL }}{{ category.icon }}" alt="" title="{{ category.name }}">
-                    <!--<p>{{ category.name }}: </p>-->
-                    <p>€{{ category.amount }}</p>
-                </li>
-            {% endfor %}
-            </ul>
-        </div>
-        <div id="bill_modal" class="modal">
-            {% for bill in bills %}
-            <div id="bill_line" class="">
-                <p>{{ bill.page }}</p>
-                <p>{{ bill.date }}</p>
-                <p>{{ bill.amount }}</p>
-            </div>
-            {% endfor %}
-        </div>
+        <div id="update">
+            <a href="#" onclick="update_monthly_budget()">Update Week</a>
+        </div> 
     </div>
-    <div id="budget_table_row" total_spending = "{{total_spending}}">
-        {% for obj in budget %}
-            <div id="week_modal_{{obj.week}}" class="budget_week_modal modal" remaining_days="{{obj.remaining_days}}">
-                <p class="week_number">Week {{obj.week}}</p>
-                <p class="date_range">{{obj.dates}}</p>
-                <hr>
-                <p id="week_amount_{{obj.week}}" class="week_amount">€{{obj.amount}}</p>
-            </div>
+    
+
+    <div id="budget-modal-section" total_spending="{{ total_spending }}">
+        {% for week in budget %}
+        <div class="budget_modal modal" id="week_{{ week.week }}" remaining_days="{{ week.remaining_days }}">
+            <p class="medium">Week {{ week.week }}</p>
+            <p class="small grey-text">{{ week.dates }}</p>
+            <p class="xlarge" id="week_amount_{{ week.week }}">€{{ week.amount }}</p>
+        </div>
         {% endfor %}
     </div>
+
+    <div id="spending-income-bills-section">
+        <div id="spending" class="modal spending-income-bill-modal">
+            <div id="spending-text">
+                <p>Spending</p>
+                <p class="small grey-text">2023-06</p>
+                {% for spending_vector in current_month_spending.spending %}
+                    <div class="spending-cat-item">
+                        <img class="spending-saving-icon spending_icons" src="{{ MEDIA_URL }}{{ spending_vector.icon }}" title="{{ spending_vector.name }}">
+                        <p class="spending-amount">€{{ spending_vector.amount }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="spending-graph" class="graph-div">
+                <canvas id="spending-graph-canvas"></canvas>
+            </div>
+        </div>
+        <div id="income" class="modal spending-income-bill-modal">
+            <div id="income-text">
+                <p>Income</p>
+                <p class="small grey-text">2023-06</p>
+                {% for spending_vector in current_month_spending.income %}
+                    <div class="spending-cat-item">
+                        <img class="spending-saving-icon income_icons" src="{{ MEDIA_URL }}{{ spending_vector.icon }}" title="{{ spending_vector.name }}">
+                        <p class="income-amount">€{{ spending_vector.amount }}</p>
+                    </div>
+                {% endfor %}
+            </div>
+            <div id="income-graph" class="graph-div">
+                <canvas id="income-graph-canvas"></canvas>
+            </div>
+        </div>
+        <div id="bills" class="modal spending-income-bill-modal">
+            <p>Upcoming Bills</p>
+            <div id="bill-check" class="small grey-text">
+                <p>Remove from budget</p>
+                <input id="budget-remove-checkbox" type="checkbox">
+            </div>
+            {% for bill in bills %}
+            <div class="bill-item">
+                <img class="bill-icon" src="{{ MEDIA_URL }}{{ bill.icon }}" title="{{ bill.page }}">
+                <div class="bill-item-text">
+                    <p class="bill-amount">€{{ bill.amount }}</p>
+                    <p class="small grey-text">{{ bill.date }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
 {% endblock %}
