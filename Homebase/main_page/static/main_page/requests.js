@@ -39,8 +39,10 @@ function update_budget_history(){
 }
 
 function update_monthly_budget(){
-  console.log("Updating Monthly Budget")
+    console.log("Updating Monthly Budget")
     const csrftoken = getCookie("csrftoken");
+
+    toggle_update_budget_loader();
 
     $.ajaxSetup({
         headers: {
@@ -56,6 +58,8 @@ function update_monthly_budget(){
         },
         success: function(response){
             console.log("SUCCESS")
+            toggle_update_budget_loader();
+            toggle_update_budget_success();
         },
         error: function(xhr, status, error){
             console.log(xhr)
