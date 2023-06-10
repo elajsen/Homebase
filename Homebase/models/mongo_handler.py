@@ -2,11 +2,12 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import pymongo
 from datetime import datetime
+from django.conf import settings
 
 
 class MongoHandler:
     def __init__(self):
-        conn_str = "mongodb+srv://eliasmattson:Qtepa112@homebasedb.g2lna9o.mongodb.net/?retryWrites=true&w=majority"
+        conn_str = settings.CREDENTIALS["mongo"]["username"]
         self.client = pymongo.MongoClient(conn_str)
 
         self.db_name = "Homebase"

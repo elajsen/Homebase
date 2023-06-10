@@ -13,6 +13,8 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from models.mongo_handler import MongoHandler
 
+from django.conf import settings
+
 
 class BillHandler:
     def __init__(self):
@@ -61,8 +63,8 @@ class PageHandlerParent:
 class BasicFitHandler(PageHandlerParent):
     def __init__(self):
         super().__init__()
-        self.email = "elajsen.mattson@gmail.com"
-        self.pswrd = "Qtepa112"
+        self.email = settings.CREDENTIALS["basic-fit"]["username"]
+        self.pswrd = settings.CREDENTIALS["basic-fit"]["password"]
         self.amount = 19.99
 
         self.page = "basic-fit"
@@ -151,8 +153,8 @@ class BasicFitHandler(PageHandlerParent):
 class OrangeHandler(PageHandlerParent):
     def __init__(self):
         super().__init__()
-        self.username = "651015507"
-        self.pswrd = "Qtepa112"
+        self.username = settings.CREDENTIALS["basic-fit"]["username"]
+        self.pswrd = settings.CREDENTIALS["basic-fit"]["password"]
         self.amount = 15
 
         self.page = "orange"

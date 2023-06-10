@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 
 from pathlib import Path
 import os
+import json
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -23,6 +24,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-tm2#1n5c5!x*l6otkwxx@+gp6be#*z09uo!1ocs*j0ycv+ge1x'
+
+# CREDENTIALS
+with open("credentials.conf") as f:
+    CREDENTIALS = json.load(f)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

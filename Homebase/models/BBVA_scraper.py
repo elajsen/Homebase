@@ -5,13 +5,14 @@ from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 
 
 class BBVAScraper:
     def __init__(self, headless=False):
         self.headless = headless
-        self.username = "Y6819278E"
-        self.pswrd = "Qtepa1"
+        self.username = settings.CREDENTIALS["bbva"]["username"]
+        self.pswrd = settings.CREDENTIALS["bbva"]["password"]
 
     def get_driver(self, headless):
         chrome_options = webdriver.ChromeOptions()
