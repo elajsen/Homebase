@@ -100,7 +100,22 @@ body{
 /*---- UPDATE ----*/
 #update{
     display: flex;
+    flex-direction: column;
     align-items: center;
+    justify-content: left;
+}
+
+#update-button{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    width:100%;
+}
+
+#update-date{
+    display: flex;
+    justify-content: left;
 }
 
 /*---- BUDGET MODAL SECTION ----*/

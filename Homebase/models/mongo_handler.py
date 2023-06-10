@@ -1,6 +1,7 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import pymongo
+from datetime import datetime
 
 
 class MongoHandler:
@@ -15,7 +16,7 @@ class MongoHandler:
         self.budget_icons = "budget_icons"
 
         self.bills = "bills"
-        
+
     def update_budget_history(self, history):
         self.delete_collection(self.db_name, self.budget_history_collection)
         self.insert_value(
@@ -59,11 +60,20 @@ class MongoHandler:
         )
         return list(icons_dict)[0]
 
+    def add_insertion_date(self, values):
+        time = datetime.now().replace(microsecond=0)
+        for val in values:
+            val["data_time"] = str(time)
+        return values
+
     def insert_value(self, db, collection, values):
         assert isinstance(values, list), "Values must be in list"
         assert isinstance(values[0], dict), "Items must be dict"
+
+        values_with_date = self.add_insertion_date(values)
+
         try:
-            self.client[db][collection].insert_many(values)
+            self.client[db][collection].insert_many(values_with_date)
             print("Item inserted")
         except Exception as e:
             print("Couldn't insert item")
@@ -71,7 +81,6 @@ class MongoHandler:
 
     def delete_values(self, db, collection, objects):
         assert len(objects) > 0, "Object ids list is empty..."
-        print(objects)
         try:
             self.client[db][collection].delete_many(objects)
             print(f"Deleted {len(objects)} items.")

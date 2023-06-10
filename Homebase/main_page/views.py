@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 # Models
 from models.budget_handler import BudgetHandler
@@ -33,13 +33,23 @@ def budget(request):
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
 
+        context = {
+            "budget": current_budget.get("week_dict"),
+            "total_spending": current_budget.get("total_spending"),
+            "current_month_spending": current_budget.get("current_month_categories"),
+            "salary": budget_handler.salary,
+            "savings": budget_handler.savings,
+            "bills": monthly_bills,
+            "data_time": current_budget.get("data_time")
+        }
+
+        return JsonResponse(context)
+
     elif request.method == "GET":
         print("Get request")
         # current_budget = list(mongo_handler.get_budget_current_week())
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
-
-    print(current_budget.get("bills"),)
 
     context = {
         "budget": current_budget.get("week_dict"),
@@ -47,6 +57,7 @@ def budget(request):
         "current_month_spending": current_budget.get("current_month_categories"),
         "salary": budget_handler.salary,
         "savings": budget_handler.savings,
-        "bills": monthly_bills
+        "bills": monthly_bills,
+        "data_time": current_budget.get("data_time")
     }
     return render(request, "main_page/budget.html", context)

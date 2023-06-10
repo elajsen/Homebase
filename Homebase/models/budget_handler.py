@@ -32,7 +32,6 @@ class BudgetHandler:
         return df
 
     def get_current_month_from_history_df(self, df, date, icon_dict):
-        print(icon_dict)
         current_month = df.loc[df["date"] == str(date)].to_dict()
         final_list = []
         for key, vector in current_month.items():
@@ -48,7 +47,7 @@ class BudgetHandler:
         df_dict = df.loc[df["date"] == str(current_month)].to_dict()
         total_spending = 0
         for key, item in df_dict.items():
-            if key == "date" or key == "_id":
+            if key in ["date", "_id", "data_time"]:
                 continue
             elif key in ["Ingreso Bizum", "other income"]:
                 total_spending -= list(item.values())[0]
@@ -135,11 +134,12 @@ class BudgetHandler:
             {"date": str(current_month_date)}
         ))
 
-        self.mongo_handler.delete_values(
-            self.mongo_handler.db_name,
-            self.mongo_handler.budget_history_collection,
-            {"_id": old_current_month_object[0].get("_id")}
-        )
+        if len(old_current_month_object) > 0:
+            self.mongo_handler.delete_values(
+                self.mongo_handler.db_name,
+                self.mongo_handler.budget_history_collection,
+                {"_id": old_current_month_object[0].get("_id")}
+            )
 
         self.mongo_handler.insert_value(
             self.mongo_handler.db_name,
@@ -151,7 +151,7 @@ class BudgetHandler:
         spending = []
         income = []
         for vector in month_dict:
-            if vector.get("name") == "_id":
+            if vector.get("name") in ["_id", "data_time"]:
                 continue
             elif vector.get("name") in ["Ingreso Bizum",
                                         "Pendiente de categorizar ingresos",
@@ -175,6 +175,10 @@ class BudgetHandler:
 
         current_month = self.get_current_month_from_history_df(
             df, current_month_date, icon_images)
+
+        data_time = [item.get("amount") for item in current_month if item.get(
+            "name") == "data_time"][0]
+
         spending_and_income = self.divide_spending_and_income(current_month)
 
         total_spending = self.get_current_spending(df, current_month_date)
@@ -197,8 +201,11 @@ class BudgetHandler:
                 "week": str(index + 1)
             })
 
+        # print(f"{week_dict}\n{total_spending}\n{spending_and_income}\n{current_month}")
+        print(data_time)
         return {
             "week_dict": week_dict,
             "total_spending": total_spending,
-            "current_month_categories": spending_and_income
+            "current_month_categories": spending_and_income,
+            "data_time": data_time
         }

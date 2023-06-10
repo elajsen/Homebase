@@ -14,7 +14,6 @@ function update_amounts(){
     $(".budget_modal").map(function() {
         var new_amount = Number(((new_net / total_days) * this.getAttribute("remaining_days")).toFixed(2))
         var week = $(this).attr("id").split("_")[1]
-        console.log(new_amount, week)
         $("#week_amount_" + week).html("€" + new_amount)
     });
 }
@@ -28,7 +27,6 @@ function handle_bills(){
         bill_amounts += Number(amt.replace("€", ""))
     });
 
-    console.log($("#budget-modal-section").attr("total_spending"))
     let total_amount = Number(Number($("#budget-modal-section").attr("total_spending")).toFixed(2))
 
     if (!value){

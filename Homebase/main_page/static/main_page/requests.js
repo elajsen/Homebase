@@ -60,6 +60,8 @@ function update_monthly_budget(){
             console.log("SUCCESS")
             toggle_update_budget_loader();
             toggle_update_budget_success();
+            location.reload();
+            //update_amounts_in_page(response);
         },
         error: function(xhr, status, error){
             console.log(xhr)
