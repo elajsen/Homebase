@@ -221,6 +221,7 @@ body{
   width: 2em;
   height: 2em;
 }
+
 .update_monthly_loader:after {
   content: " ";
   display: block;
@@ -232,6 +233,7 @@ body{
   border-color: rgb(182 203 158) transparent rgb(182 203 158) transparent;
   animation: update_monthly_loader 1.2s linear infinite;
 }
+
 @keyframes update_monthly_loader {
   0% {
     transform: rotate(0deg);

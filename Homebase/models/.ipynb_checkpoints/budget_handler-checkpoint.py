@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 class BudgetHandler:
     def __init__(self):
-        self.bbva_scraper = BBVAScraper(headless=True)
+        self.bbva_scraper = BBVAScraper(headless=False)
         self.mongo_handler = MongoHandler()
         self.salary = 1733.84
         self.savings = 100
