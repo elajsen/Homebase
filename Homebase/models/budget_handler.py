@@ -193,7 +193,7 @@ class BudgetHandler:
         week_dict = []
         for index, vector in enumerate(budget_amounts):
             structured_date_range = str(vector.get(
-                "dates")[0]) + "-" + str(vector.get("dates")[0])
+                "dates")[0]) + "-" + str(vector.get("dates")[1])
             week_dict.append({
                 "dates": structured_date_range,
                 "amount": vector.get("amount"),
