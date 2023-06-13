@@ -33,7 +33,7 @@ with open("credentials.conf") as f:
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    "http://ec2-13-51-85-228.eu-north-1.compute.amazonaws.com/",
+    "ec2-13-51-85-228.eu-north-1.compute.amazonaws.com",
     "13-51-85-228"
 ]
 
