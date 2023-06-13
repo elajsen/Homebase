@@ -155,7 +155,11 @@ class BBVAScraper:
 
         time.sleep(2)
         # Acceso
-        self.get_item_by_text("Acceso").click()
+        # self.get_item_by_text("Acceso").click()
+        self.find_element_with_wait(
+            by=By.XPATH,
+            value="//*[contains(text(), 'Acceso')]"
+        ).click()
 
         time.sleep(2)
         self.switch_to_iframe()
