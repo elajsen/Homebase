@@ -10,9 +10,9 @@ from models.bill_handler import BillHandler
 from django.shortcuts import render
 
 
-def index(request):
+def home(request):
     context = {}
-    return render(request, "main_page/index.html", context)
+    return render(request, "main_page/home.html", context)
 
 
 def budget(request):
@@ -50,6 +50,19 @@ def budget(request):
         # current_budget = list(mongo_handler.get_budget_current_week())
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
+        print(request.GET)
+        if request.GET.get("type", None) == "app":
+            print("APP ACCESSING")
+            context = {
+                "budget": current_budget.get("week_dict"),
+                "total_spending": current_budget.get("total_spending"),
+                "current_month_spending": current_budget.get("current_month_categories"),
+                "salary": budget_handler.salary,
+                "savings": budget_handler.savings,
+                "bills": monthly_bills,
+                "data_time": current_budget.get("data_time")
+            }
+            return JsonResponse(context)
 
     context = {
         "budget": current_budget.get("week_dict"),

@@ -14,7 +14,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 
 class BBVAScraper:
-    def __init__(self, headless=False):
+    def __init__(self, headless=True):
         self.headless = headless
         self.username = settings.CREDENTIALS["bbva"]["username"]
         self.pswrd = settings.CREDENTIALS["bbva"]["password"]
