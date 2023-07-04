@@ -9,7 +9,7 @@ from dateutil.relativedelta import relativedelta
 
 class BudgetHandler:
     def __init__(self):
-        self.bbva_scraper = BBVAScraper(headless=False)
+        self.bbva_scraper = BBVAScraper(headless=True)
         self.mongo_handler = MongoHandler()
         self.salary = 1733.84
         self.savings = 100
@@ -33,6 +33,10 @@ class BudgetHandler:
 
     def get_current_month_from_history_df(self, df, date, icon_dict):
         current_month = df.loc[df["date"] == str(date)].to_dict()
+
+        if len(current_month.get("date")) == 0:
+            return []
+
         final_list = []
         for key, vector in current_month.items():
             if key == "_id" or key == "date" or list(vector.values())[0] == 0:
@@ -148,6 +152,24 @@ class BudgetHandler:
         )
 
     def divide_spending_and_income(self, month_dict):
+        def check_other_income(income):
+            names = [vector.get("name") for vector in income]
+            if "other income" not in names:
+                return income
+
+            total_income = 0
+            for vector in income:
+                if vector.get("name") == "other income":
+                    other_amt = vector.get("amount")
+                    other_amt_index = income.index(vector)
+                else:
+                    total_income += vector.get("amount")
+
+            if other_amt == total_income:
+                income.pop(other_amt_index)
+
+            return income
+
         spending = []
         income = []
         for vector in month_dict:
@@ -155,10 +177,14 @@ class BudgetHandler:
                 continue
             elif vector.get("name") in ["Ingreso Bizum",
                                         "Pendiente de categorizar ingresos",
-                                        "other income"]:
+                                        "other income",
+                                        "Nómina"]:
                 income.append(vector)
             else:
                 spending.append(vector)
+
+        income = check_other_income(income)
+
         return {
             "income": income,
             "spending": spending
@@ -175,6 +201,9 @@ class BudgetHandler:
 
         current_month = self.get_current_month_from_history_df(
             df, current_month_date, icon_images)
+
+        if len(current_month) == 0:
+            return {}
 
         data_time = [item.get("amount") for item in current_month if item.get(
             "name") == "data_time"][0]

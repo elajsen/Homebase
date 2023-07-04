@@ -73,4 +73,5 @@ def budget(request):
         "bills": monthly_bills,
         "data_time": current_budget.get("data_time")
     }
+    print(current_budget.get("current_month_categories"))
     return render(request, "main_page/budget.html", context)

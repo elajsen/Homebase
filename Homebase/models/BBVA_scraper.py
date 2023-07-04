@@ -95,6 +95,10 @@ class BBVAScraper:
 
     # ----- WEBPAGE NAVIGATION -------
     def switch_to_iframe(self):
+        self.find_element_with_wait(
+            by=By.TAG_NAME,
+            value="iframe"
+        )
         iframe = self.driver.find_elements_by_tag_name("iframe")
         self.driver.switch_to.frame(iframe[0])
 
@@ -151,7 +155,14 @@ class BBVAScraper:
 
     def log_in(self):
         # Cookies
-        self.get_item_by_text("Aceptar").click()
+        try:
+            self.find_element_with_wait(
+                by=By.XPATH,
+                value="//*[contains(text(), 'Aceptar')]"
+            ).click()
+            print("Accepted cookies")
+        except:
+            print("Couldn't find cookies accept")
 
         time.sleep(2)
         # Acceso
@@ -165,7 +176,9 @@ class BBVAScraper:
         self.switch_to_iframe()
 
         time.sleep(1)
-        el = self.driver.find_elements_by_tag_name("input")
+        el = self.find_elements_with_wait(
+            by=By.TAG_NAME,
+            value="input")
 
         el[0].send_keys(self.username)
         el[1].send_keys(self.pswrd)
@@ -243,7 +256,9 @@ class BBVAScraper:
             amount = amt_card.find_element_by_xpath(
                 xpath=".//span[@class='sr-only']").get_attribute("innerHTML")
             res[category] = string_to_float(amount)
-        # res["other income"] = get_income() - res.get("Nómina", 0)
+
+        res["other income"] = round(get_income() - res.get("Nómina", 0), 2)
+
         return res
 
     def get_current_month_categories(self):
