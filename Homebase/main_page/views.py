@@ -8,6 +8,7 @@ from models.bill_handler import BillHandler
 
 # Create your views here.
 from django.shortcuts import render
+from pprint import pprint
 
 
 def home(request):
@@ -18,7 +19,6 @@ def home(request):
 def budget(request):
     print("budget")
     budget_handler = BudgetHandler()
-    mongo_handler = MongoHandler()
     bill_handler = BillHandler()
 
     if request.method == "POST":
@@ -50,7 +50,6 @@ def budget(request):
         # current_budget = list(mongo_handler.get_budget_current_week())
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
-        print(request.GET)
         if request.GET.get("type", None) == "app":
             print("APP ACCESSING")
             context = {
@@ -75,3 +74,17 @@ def budget(request):
     }
     print(current_budget.get("current_month_categories"))
     return render(request, "main_page/budget.html", context)
+
+
+def monthly_recap(request):
+
+    budget_handler = BudgetHandler()
+
+    if request.method == "GET":
+        monthly_recap = budget_handler.get_monthly_recap()
+
+    context = {
+        "monthly_recap": monthly_recap
+    }
+    pprint(context)
+    return render(request, "main_page/monthly_recap.html", context)

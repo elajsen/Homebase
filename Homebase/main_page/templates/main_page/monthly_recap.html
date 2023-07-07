@@ -1,0 +1,47 @@
+{% extends "main_page/index.html" %}
+
+{% block main_content %}
+
+<div id="monthly_recap_div">
+    {% for date, data in monthly_recap.items %}
+    <div class="month_div modal">
+        <div class="top_date">
+            <p>{{ date }}</p>
+        </div>
+        <div class="monthly_recap_amounts">
+            <div id="spending" class="summary_category">
+                <p>Spending</p>
+                {% for item in data.spending %}
+                <div class="summary_item">
+                    <p>{{ item.name }}</p>
+                    <p>€{{ item.amount }}</p>
+                    <p>%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="income" class="summary_category">
+                <p>Income</p>
+                {% for item in data.income %}
+                <div class="summary_item">
+                    <p>{{ item.name }}</p>
+                    <p>€{{ item.amount }}</p>
+                    <p>%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="summary" class="summary_category">
+                <p>Summary</p>
+                {% for item in data.summary %}
+                <div class="summary_item">
+                    <p>{{ item.name }}</p>
+                    <p>€{{ item.amount }}</p>
+                    <p>%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

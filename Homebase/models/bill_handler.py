@@ -26,6 +26,7 @@ class BillHandler:
         basic_fit_dates = self.basic_fit_handler.get_dates()
         orange_dates = self.orange_handler.get_dates()
         csn_dates = self.csn_handler.get_dates()
+        print(basic_fit_dates, orange_dates, csn_dates)
 
         return basic_fit_dates + orange_dates + csn_dates
 

@@ -5,6 +5,7 @@ import re
 import time
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
+from pprint import pprint
 
 
 class BudgetHandler:
@@ -190,37 +191,50 @@ class BudgetHandler:
             "spending": spending
         }
 
-    def get_monthly_budget(self):
-        print("Get Monthly Budget")
+    def get_current_month_amounts_and_icons(self, current_month_first_date):
         res = self.mongo_handler.get_budget_history()
         df = self.res_dictionary_to_df(res)
-
-        current_month_date = str(datetime.today().date().replace(day=1))
 
         icon_images = self.mongo_handler.get_budget_icons()
 
         current_month = self.get_current_month_from_history_df(
-            df, current_month_date, icon_images)
+            df, current_month_first_date, icon_images)
+        return current_month, df
 
-        if len(current_month) == 0:
-            return {}
-
-        data_time = [item.get("amount") for item in current_month if item.get(
-            "name") == "data_time"][0]
-
-        spending_and_income = self.divide_spending_and_income(current_month)
-
-        total_spending = self.get_current_spending(df, current_month_date)
-
-        net_salary = round(self.salary - total_spending, 2) - self.savings
-
+    def get_week_by_week_amounts(self, net_salary):
         weeks_in_month = self.get_weeks_in_month()
         remaining_weeks = self.get_remaining_weeks(weeks_in_month)
 
         budget_amounts = self.get_weekly_budget(net_salary, remaining_weeks)
+        return budget_amounts
+
+    def get_monthly_budget(self):
+        print("Get Monthly Budget")
+
+        current_month_date = str(datetime.today().date().replace(day=1))
+
+        current_month_amounts_and_icons, category_df = self.get_current_month_amounts_and_icons(
+            current_month_date)
+
+        if len(current_month_amounts_and_icons) == 0:
+            return {}
+
+        data_time = [item.get("amount") for item in current_month_amounts_and_icons if item.get(
+            "name") == "data_time"][0]
+
+        spending_and_income = self.divide_spending_and_income(
+            current_month_amounts_and_icons)
+
+        total_spending_amount = self.get_current_spending(
+            category_df, current_month_date)
+
+        net_salary = round(
+            self.salary - total_spending_amount, 2) - self.savings
+
+        week_by_week_budget_amounts = self.get_week_by_week_amounts(net_salary)
 
         week_dict = []
-        for index, vector in enumerate(budget_amounts):
+        for index, vector in enumerate(week_by_week_budget_amounts):
             structured_date_range = str(vector.get(
                 "dates")[0]) + "-" + str(vector.get("dates")[1])
             week_dict.append({
@@ -230,11 +244,121 @@ class BudgetHandler:
                 "week": str(index + 1)
             })
 
-        # print(f"{week_dict}\n{total_spending}\n{spending_and_income}\n{current_month}")
-        print(data_time)
         return {
             "week_dict": week_dict,
-            "total_spending": total_spending,
+            "total_spending": total_spending_amount,
             "current_month_categories": spending_and_income,
             "data_time": data_time
         }
+
+    def divide_monthly_income_and_spending(self, monthly_expenses_dict):
+
+        income_and_spending = []
+        for month in monthly_expenses_dict:
+            formated_month = [
+                {"name": name, "amount": month.get(name)} for name in month]
+
+            income_and_spending.append(
+                self.divide_spending_and_income(formated_month))
+
+        return income_and_spending
+
+    def get_net_profit_and_totals_from_months(self, monthly_expenses_dict):
+        for month in monthly_expenses_dict:
+            total_income = sum([item.get("amount")
+                               for item in month.get("income")])
+            total_expenses = sum([item.get("amount") for item in month.get(
+                "spending") if item.get("name") != "date"])
+            net_profit = total_income - total_expenses
+            month["summary"] = [
+                {"name": "total_income", "amount": round(total_income, 2)},
+                {"name": "total_expenses", "amount": round(total_expenses, 2)},
+                {"name": "net_profit", "amount": round(net_profit, 2)}
+            ]
+
+        return monthly_expenses_dict
+
+    def get_month_before(self, month, monthly_expenses_with_profit_and_totals):
+        date_str = [item.get("amount") for item in month.get(
+            "spending") if item.get("name") == "date"][0]
+        date = datetime.strptime(date_str, "%Y-%m-%d")
+
+        date_1 = (date - relativedelta(months=1)).date()
+        month_d_1 = None
+        for month in monthly_expenses_with_profit_and_totals:
+            proposed_date = [item.get("amount")
+                             for item in month.get("spending") if item.get("name") == "date"][0]
+
+            if str(proposed_date) == str(date_1):
+                month_d_1 = month
+                break
+            else:
+                continue
+
+        if month_d_1 is None:
+            return None
+        return month_d_1
+
+    def get_difference_between_months(self, monthly_expenses_with_profit_and_totals):
+        for month_d in monthly_expenses_with_profit_and_totals:
+            month_d_1 = self.get_month_before(
+                month_d, monthly_expenses_with_profit_and_totals)
+
+            if not month_d_1:
+                continue
+
+            for category in month_d:
+                item_list_d = month_d.get(category)
+                item_list_d_1 = month_d_1.get(category)
+
+                for item_d in item_list_d:
+                    if isinstance(item_d, str) or item_d.get("name") == "date":
+                        continue
+                    amount_d = item_d.get("amount")
+
+                    item_d_1 = next(iter([item for item in item_list_d_1 if item.get(
+                        "name") == item_d.get("name")]), None)
+
+                    if not item_d_1:
+                        item_d["diff"] = None
+                        continue
+
+                    amount_d_1 = item_d_1.get("amount")
+
+                    item_d["diff"] = round(
+                        ((amount_d - amount_d_1) / amount_d)*100, 2)
+
+            # pprint(month_d)
+        return monthly_expenses_with_profit_and_totals
+
+    def structure_output_monthly_recap(self, monthly_recap):
+        final_output = {}
+        for month in monthly_recap:
+            date_item = [item for item in month.get(
+                "spending") if item.get("name") == "date"][0]
+            date = date_item.get("amount")
+            month.get("spending").remove(date_item)
+            final_output[date] = month
+
+        return final_output
+
+    def get_monthly_recap(self):
+        monthly_expenses_dict = self.mongo_handler.get_budget_history()
+
+        divided_income_and_spending = self.divide_monthly_income_and_spending(
+            monthly_expenses_dict)
+
+        monthly_expenses_with_profit_and_totals = self\
+            .get_net_profit_and_totals_from_months(divided_income_and_spending)
+
+        monthly_expenses_with_percentage_diff = self\
+            .get_difference_between_months(monthly_expenses_with_profit_and_totals)
+
+        structured_monthly_recap = self\
+            .structure_output_monthly_recap(monthly_expenses_with_percentage_diff)
+
+        myKeys = sorted(list(structured_monthly_recap.keys()), reverse=True)
+        sorted_dict = {i: structured_monthly_recap[i] for i in myKeys}
+        reversed_structured_monthly_recap = sorted_dict
+
+        return reversed_structured_monthly_recap
