@@ -3,6 +3,9 @@
 {% block main_content %}
 
 <div id="monthly_recap_div">
+    <div id="update-div">
+        <a href="#" onclick="update_monthly_recap()" class="small grey-text">Update History</a>
+    </div>
     {% for date, data in monthly_recap.items %}
     <div class="month_div modal">
         <div class="top_date">

@@ -15,12 +15,16 @@ from models.mongo_handler import MongoHandler
 
 from django.conf import settings
 
+from pprint import pprint
+
 
 class BillHandler:
     def __init__(self):
         self.basic_fit_handler = BasicFitHandler()
         self.orange_handler = OrangeHandler()
         self.csn_handler = CSNHandler()
+
+        self.mongo_handler = MongoHandler()
 
     def get_dates(self):
         basic_fit_dates = self.basic_fit_handler.get_dates()
@@ -29,6 +33,17 @@ class BillHandler:
         print(basic_fit_dates, orange_dates, csn_dates)
 
         return basic_fit_dates + orange_dates + csn_dates
+
+    def update_dates(self):
+        basic_fit_date = self.basic_fit_handler.get_basic_fit_date()
+        orange_date = self.orange_handler.get_orange_date()
+
+        update = {
+            "basic-fit": basic_fit_date,
+            "orange": orange_date
+        }
+
+        self.mongo_handler.update_bills(update)
 
 
 class PageHandlerParent:
@@ -154,11 +169,17 @@ class BasicFitHandler(PageHandlerParent):
 class OrangeHandler(PageHandlerParent):
     def __init__(self):
         super().__init__()
-        self.username = settings.CREDENTIALS["basic-fit"]["username"]
-        self.pswrd = settings.CREDENTIALS["basic-fit"]["password"]
+        self.username = settings.CREDENTIALS["orange"]["username"]
+        self.pswrd = settings.CREDENTIALS["orange"]["password"]
         self.amount = 15
 
         self.page = "orange"
+
+    def find_element_with_wait(self, by=None, value=None):
+        element = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((by, value))
+        )
+        return element
 
     def get_driver(self, headless):
         chrome_options = webdriver.ChromeOptions()
@@ -180,7 +201,7 @@ class OrangeHandler(PageHandlerParent):
                 (By.XPATH, "//div[@id='consent_prompt_submit']"))
         )
         element.click()
-        user_el = self.driver.find_element(
+        user_el = self.find_element_with_wait(
             by=By.XPATH, value="//input[@placeholder='Usuario']")
         pswrd_el = self.driver.find_element(
             by=By.XPATH, value="//input[@placeholder='Contraseña']")

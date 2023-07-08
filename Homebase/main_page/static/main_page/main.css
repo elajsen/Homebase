@@ -247,7 +247,7 @@ body{
 .month_div{
     display:flex;
     flex-direction: column;
-    width:100%;
+    width:90%;
 }
 
 .monthly_recap_amounts{
@@ -259,12 +259,14 @@ body{
     display: flex;
     flex-direction: column;
     margin: 1rem;
+    flex-grow:1;
 }
 
 .summary_item{
     display:flex;
     flex-direction: row;
     justify-content: space-between;
+    flex-grow:1;
 }
 
 .summary_item p{

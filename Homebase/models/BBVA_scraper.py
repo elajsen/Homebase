@@ -200,7 +200,7 @@ class BBVAScraper:
         return movement_elements
 
     def filter_dates(self, date_from, date_until):
-        btn = self.driver.find_elements_by_xpath("//div[@id='dateSimulationContainer']")[0]\
+        btn = self.find_element_with_wait(by=By.XPATH, value="//div[@id='dateSimulationContainer']")\
             .find_element_by_tag_name("i")
         time.sleep(1)
         btn.click()

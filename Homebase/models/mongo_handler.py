@@ -30,6 +30,16 @@ class MongoHandler:
             self.db_name, self.budget_current_week, [history])
         print("Updated budget history")
 
+    def update_bills(self, new_bills):
+        filter = {"_id": self.get_bills().get("_id")}
+        update = {"$set": {}}
+
+        for key in new_bills:
+            update.get("$set")[key + "." + list(new_bills.get(key).keys())
+                               [0]] = list(new_bills.get(key).values())[0]
+
+        self.client[self.db_name][self.bills].update_one(filter, update)
+
     def structure_budget_history(self, budget_history):
         structured_history = []
         for key, value in budget_history[0].items():

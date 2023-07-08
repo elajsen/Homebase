@@ -29,6 +29,9 @@ def budget(request):
             budget_handler.update_backlog()
         elif data.get("type") == "update_monthly_budget":
             budget_handler.update_monthly_budget()
+        elif data.get("type") == "update_bills":
+            print("Update bills")
+            bill_handler.update_dates()
 
         current_budget = budget_handler.get_monthly_budget()
         monthly_bills = bill_handler.get_dates()
@@ -80,11 +83,16 @@ def monthly_recap(request):
 
     budget_handler = BudgetHandler()
 
+    if request.method == "POST":
+        if request.POST.get("type") == "update monthly recap":
+            print("Updating Backlog")
+            budget_handler.update_backlog()
+        return JsonResponse({})
+
     if request.method == "GET":
         monthly_recap = budget_handler.get_monthly_recap()
 
     context = {
         "monthly_recap": monthly_recap
     }
-    pprint(context)
     return render(request, "main_page/monthly_recap.html", context)
