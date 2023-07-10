@@ -1,3 +1,5 @@
+from datetime import date, datetime
+
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 
@@ -66,16 +68,19 @@ def budget(request):
             }
             return JsonResponse(context)
 
+    print(f"Total Spending {current_budget.get('total_spending')}")
     context = {
+        "current_month": str(datetime.today().date())[:7],
         "budget": current_budget.get("week_dict"),
         "total_spending": current_budget.get("total_spending"),
         "current_month_spending": current_budget.get("current_month_categories"),
         "salary": budget_handler.salary,
         "savings": budget_handler.savings,
         "bills": monthly_bills,
-        "data_time": current_budget.get("data_time")
+        "data_time": current_budget.get("data_time"),
+        "last_month_bills": current_budget.get("last_month_bills")
     }
-    print(current_budget.get("current_month_categories"))
+
     return render(request, "main_page/budget.html", context)
 
 
@@ -91,8 +96,10 @@ def monthly_recap(request):
 
     if request.method == "GET":
         monthly_recap = budget_handler.get_monthly_recap()
-
+        graph_data = budget_handler.get_monthly_recap_graphs(monthly_recap)
+    pprint(graph_data)
     context = {
-        "monthly_recap": monthly_recap
+        "monthly_recap": monthly_recap,
+        "graph_data": graph_data
     }
     return render(request, "main_page/monthly_recap.html", context)

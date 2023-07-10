@@ -3,48 +3,17 @@
 {% block main_content %}
 
 <div id="monthly_recap_div">
-    <div id="update-div">
-        <a href="#" onclick="update_monthly_recap()" class="small grey-text">Update History</a>
+    <div id="monthly_recap_navbar">
+        <a class="monthly-recap-navbar-item" id="navbar_amounts" data-checked="true" linked-page="monthly_recap_amounts">Amounts</p>
+        <a class="monthly-recap-navbar-item" id="navbar_graphs" data-checked="false" linked-page="monthly_recap_graph">Graphs</p>
     </div>
-    {% for date, data in monthly_recap.items %}
-    <div class="month_div modal">
-        <div class="top_date">
-            <p>{{ date }}</p>
-        </div>
-        <div class="monthly_recap_amounts">
-            <div id="spending" class="summary_category">
-                <p>Spending</p>
-                {% for item in data.spending %}
-                <div class="summary_item">
-                    <p>{{ item.name }}</p>
-                    <p>€{{ item.amount }}</p>
-                    <p>%{{ item.diff }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            <div id="income" class="summary_category">
-                <p>Income</p>
-                {% for item in data.income %}
-                <div class="summary_item">
-                    <p>{{ item.name }}</p>
-                    <p>€{{ item.amount }}</p>
-                    <p>%{{ item.diff }}</p>
-                </div>
-                {% endfor %}
-            </div>
-            <div id="summary" class="summary_category">
-                <p>Summary</p>
-                {% for item in data.summary %}
-                <div class="summary_item">
-                    <p>{{ item.name }}</p>
-                    <p>€{{ item.amount }}</p>
-                    <p>%{{ item.diff }}</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
 
+    <div id="monthly_recap_amounts" class="monthly_recap_page" style="display:flex">
+        {% include "main_page/monthly_recap_amounts.html" %}
+    </div>
+
+    <div id="monthly_recap_graph" class="monthly_recap_page" style="display:none">
+        {% include "main_page/monthly_recap_graphs.html" %}
+    </div>
+</div>
 {% endblock %}

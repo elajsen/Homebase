@@ -43,13 +43,18 @@
         <div id="spending" class="modal spending-income-bill-modal">
             <div id="spending-text">
                 <p>Spending</p>
-                <p class="small grey-text">2023-06</p>
+                <p class="small grey-text">{{ current_month }}</p>
+                <div id="last-month-budget-div" style="display:flex;">
+                    <p class="small grey-text">Use last months bills</p>
+                    <input type="checkbox" id="last-month-bills-checkbox" checked>
+                </div>
                 {% for spending_vector in current_month_spending.spending %}
                     <div class="spending-cat-item">
                         <img class="spending-saving-icon spending_icons" src="{{ MEDIA_URL }}{{ spending_vector.icon }}" title="{{ spending_vector.name }}">
                         <p class="spending-amount">€{{ spending_vector.amount }}</p>
                     </div>
                 {% endfor %}
+                <p id="last_month_spending" style="display: none;" type="last_month_bill_amounts">€{{ last_month_bills }}</p>
             </div>
             <div id="spending-graph" class="graph-div">
                 <canvas id="spending-graph-canvas"></canvas>
@@ -58,7 +63,7 @@
         <div id="income" class="modal spending-income-bill-modal">
             <div id="income-text">
                 <p>Income</p>
-                <p class="small grey-text">2023-06</p>
+                <p class="small grey-text">{{ current_month }}</p>
                 {% for spending_vector in current_month_spending.income %}
                     <div class="spending-cat-item">
                         <img class="spending-saving-icon income_icons" src="{{ MEDIA_URL }}{{ spending_vector.icon }}" title="{{ spending_vector.name }}">
@@ -70,12 +75,12 @@
                 <canvas id="income-graph-canvas"></canvas>
             </div>
         </div>
-        <div id="bills" class="modal">
+        <div id="bills" class="modal" total_bills="0">
             <p>Upcoming Bills</p>
             <a href="#" onclick="update_bills()" class="small grey-text">Update bills</a>
             <div id="bill-check" class="small grey-text">
                 <p>Remove from budget</p>
-                <input id="budget-remove-checkbox" type="checkbox">
+                <input id="budget-remove-checkbox" type="checkbox" checked>
             </div>
             {% for bill in bills %}
             <div class="bill-item">

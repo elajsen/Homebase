@@ -48,16 +48,25 @@ class BudgetHandler:
 
         return final_list
 
-    def get_current_spending(self, df, current_month):
+    def get_current_spending(self, df, current_month, spending_and_income):
         df_dict = df.loc[df["date"] == str(current_month)].to_dict()
         total_spending = 0
         for key, item in df_dict.items():
             if key in ["date", "_id", "data_time"]:
                 continue
             elif key in ["Ingreso Bizum", "other income"]:
+                if key == "other income":
+                    other_income = [item.get("amount") for item in spending_and_income.get(
+                        "income") if item.get("name") == "other income"]
+                    if len(other_income) == 0:
+                        print("NO OTHER INCOME SKIPPING")
+                        continue
+                print(f"{key}: income: {list(item.values())[0]}")
                 total_spending -= list(item.values())[0]
             else:
+                print(f"{key}: spending: {list(item.values())[0]}")
                 total_spending += list(item.values())[0]
+        print(f"Total spending {total_spending}")
         return round(total_spending, 2)
 
     def get_weeks_in_month(self, month=None):
@@ -94,6 +103,9 @@ class BudgetHandler:
 
     def get_remaining_weeks(self, weeks_in_month):
         current_date = datetime.today().date()
+        last_day_next_month = current_date\
+            .replace(month=current_date.month + 1)\
+            .replace(day=1)
 
         remaining_weeks = []
 
@@ -109,6 +121,12 @@ class BudgetHandler:
                 "dates": week,
                 "remaining_days": remaining_days
             })
+
+        # Remaining days for the final week
+        final_week_start_date = weeks_in_month[-1][0]
+        remaining_weeks[-1]["remaining_days"] = (
+            last_day_next_month - final_week_start_date).days
+
         return remaining_weeks
 
     def get_weekly_budget(self, net_salary, remaining_weeks):
@@ -191,15 +209,12 @@ class BudgetHandler:
             "spending": spending
         }
 
-    def get_current_month_amounts_and_icons(self, current_month_first_date):
-        res = self.mongo_handler.get_budget_history()
-        df = self.res_dictionary_to_df(res)
-
+    def get_current_month_amounts_and_icons(self, budget_history_df, current_month_first_date):
         icon_images = self.mongo_handler.get_budget_icons()
 
         current_month = self.get_current_month_from_history_df(
-            df, current_month_first_date, icon_images)
-        return current_month, df
+            budget_history_df, current_month_first_date, icon_images)
+        return current_month, budget_history_df
 
     def get_week_by_week_amounts(self, net_salary):
         weeks_in_month = self.get_weeks_in_month()
@@ -208,13 +223,28 @@ class BudgetHandler:
         budget_amounts = self.get_weekly_budget(net_salary, remaining_weeks)
         return budget_amounts
 
+    def get_last_month_bills(self, history_df, current_month_date):
+        last_month_date = current_month_date - relativedelta(months=1)
+
+        last_month_df = history_df.loc[history_df["date"] == str(
+            last_month_date)].to_dict()
+
+        return list(last_month_df.get("Hogar").values())[0]
+
     def get_monthly_budget(self):
         print("Get Monthly Budget")
 
-        current_month_date = str(datetime.today().date().replace(day=1))
+        current_month_date = datetime.today().date().replace(day=1)
+        current_month_date_string = str(current_month_date)
+        res = self.mongo_handler.get_budget_history()
+        budget_history_df = self.res_dictionary_to_df(res)
 
-        current_month_amounts_and_icons, category_df = self.get_current_month_amounts_and_icons(
-            current_month_date)
+        current_month_amounts_and_icons, category_df = self\
+            .get_current_month_amounts_and_icons(budget_history_df,
+                                                 current_month_date_string)
+
+        last_month_bills = self.get_last_month_bills(budget_history_df,
+                                                     current_month_date)
 
         if len(current_month_amounts_and_icons) == 0:
             return {}
@@ -226,7 +256,7 @@ class BudgetHandler:
             current_month_amounts_and_icons)
 
         total_spending_amount = self.get_current_spending(
-            category_df, current_month_date)
+            category_df, current_month_date_string, spending_and_income)
 
         net_salary = round(
             self.salary - total_spending_amount, 2) - self.savings
@@ -248,7 +278,8 @@ class BudgetHandler:
             "week_dict": week_dict,
             "total_spending": total_spending_amount,
             "current_month_categories": spending_and_income,
-            "data_time": data_time
+            "data_time": data_time,
+            "last_month_bills": last_month_bills
         }
 
     def divide_monthly_income_and_spending(self, monthly_expenses_dict):
@@ -326,7 +357,7 @@ class BudgetHandler:
                     amount_d_1 = item_d_1.get("amount")
 
                     item_d["diff"] = round(
-                        ((amount_d - amount_d_1) / amount_d)*100, 2)
+                        ((amount_d - amount_d_1) / abs(amount_d))*100, 2)
 
             # pprint(month_d)
         return monthly_expenses_with_profit_and_totals
@@ -341,6 +372,27 @@ class BudgetHandler:
             final_output[date] = month
 
         return final_output
+
+    def get_monthly_recap_graphs(self, monthly_recap_dict):
+        res_dict = {}
+        for month, month_dict in monthly_recap_dict.items():
+            flattened_dict = month_dict.get(
+                "income") + month_dict.get("spending") + month_dict.get("summary")
+            for item in flattened_dict:
+                if item.get("name") not in res_dict.keys():
+                    res_dict[item.get("name")] = {"data": [], "label": []}
+
+                res_dict[item.get("name")].get(
+                    "data").append(item.get("amount"))
+                res_dict[item.get("name")].get(
+                    "label").append(month)
+
+        formatted_res = []
+        for name, data in res_dict.items():
+            formatted_res.append(
+                {"name": name, "formated_name": name.replace(" ", "_"), "data": data})
+
+        return formatted_res
 
     def get_monthly_recap(self):
         monthly_expenses_dict = self.mongo_handler.get_budget_history()

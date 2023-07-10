@@ -1,9 +1,35 @@
+function check_last_update(){
+    function get_current_date(){
+        const current_date = new Date().toJSON().replace("T", " ").replace("Z", "")
+        return current_date
+    }
+
+    const current_date_str = get_current_date().split(".")[0]
+
+    const last_update_date_str = $("#last_update_date").html().split(": ")[1]
+    
+    const last_update_date = new Date(last_update_date_str)
+    const current_date = new Date(current_date_str)
+
+    if (current_date > last_update_date){
+        const link = $("#update-button a")
+        link.click()
+    }
+}
+
 function update_amounts(){
     const total_spending = $("#budget-modal-section").attr("total_spending")
     const salary = $("#budget_salary").val()
     const savings = $("#budget_savings").val()
 
-    const new_net = Number((salary - total_spending - savings).toFixed(2))
+    const total_bills = $("#bills").attr("total_bills")
+
+    console.log("total_spending", total_spending)
+    console.log("salary", salary)
+    console.log("savings", savings)
+    console.log("total bills", total_bills)
+
+    const new_net = Number((salary - total_spending - savings - total_bills).toFixed(2))
 
     const days = $(".budget_modal").map(function() {
         return Number(this.getAttribute("remaining_days"));
@@ -27,18 +53,67 @@ function handle_bills(){
         bill_amounts += Number(amt.replace("€", ""))
     });
 
-    let total_amount = Number(Number($("#budget-modal-section").attr("total_spending")).toFixed(2))
-
     if (!value){
-        bill_amounts *= -1
+        bill_amounts = 0
     }
 
-    let new_total_amount = total_amount + Number(bill_amounts.toFixed(2))
-    $("#budget-modal-section").attr("total_spending", new_total_amount)
+    $("#bills").attr("total_bills", bill_amounts.toFixed(2))
     update_amounts()
 }
 
+function update_total_spending(){
+    let new_total_amount = 0
+
+    $(".spending-amount").map(function() {
+        const number_string = $(this).html().replace("€", "")
+        console.log("Spending")
+        console.log(number_string)
+        new_total_amount += Number(number_string)
+    })
+
+    $(".income-amount").map(function() {
+        const number_string = $(this).html().replace("€", "")
+        console.log("Income")
+        console.log(number_string)
+        new_total_amount -= Number(number_string)
+    })
+    console.log("Total")
+    console.log(new_total_amount)
+    $("#budget-modal-section").attr("total_spending", new_total_amount)
+}
+
+function handle_last_month_bills(){
+    console.log("running function")
+
+    const is_checked = $("#last-month-bills-checkbox").is(":checked");
+    const type = $("#last_month_spending").attr("type")
+
+    if (is_checked){
+        const last_month_bill_amount = $("#last_month_spending").html()
+        const current_month_bill_amount = $('[title="Hogar"]').next().html()
+
+        $("#last_month_spending").html(current_month_bill_amount)
+        $("#last_month_spending").attr("type", "current_month_bill_amounts")
+        $('[title="Hogar"]').next().html(last_month_bill_amount)
+
+    } else {
+        const last_month_bill_amount = $('[title="Hogar"]').next().html()
+        const current_month_bill_amount = $("#last_month_spending").html()
+        
+        $("#last_month_spending").html(last_month_bill_amount)
+        $("#last_month_spending").attr("type", "last_month_bill_amounts")
+        $('[title="Hogar"]').next().html(current_month_bill_amount)
+    }
+
+    update_total_spending();
+    update_amounts();
+}
+
 $(document).ready(function(){
+    check_last_update()
+    handle_bills()
+    handle_last_month_bills()
+
     $("#budget_savings").on("input", function() {
         update_amounts();
     });
@@ -48,4 +123,7 @@ $(document).ready(function(){
     $("#budget-remove-checkbox").on("input", function() {
         handle_bills();
     });
+    $("#last-month-bills-checkbox").on("input", function(){
+        handle_last_month_bills();
+    })
 })

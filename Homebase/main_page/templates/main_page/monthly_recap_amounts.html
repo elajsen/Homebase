@@ -1,0 +1,44 @@
+<div id="monthly_recap_div">
+    <div id="update-div">
+        <a href="#" onclick="update_monthly_recap()" class="small grey-text">Update History</a>
+    </div>
+    {% for date, data in monthly_recap.items %}
+    <div class="month_div modal">
+        <div class="top-date">
+            <p>{{ date }}</p>
+        </div>
+        <div class="monthly_recap_amounts">
+            <div id="spending" class="summary_category">
+                <p class="category-name">Spending</p>
+                {% for item in data.spending %}
+                <div class="summary_item">
+                    <p class="summary-title small">{{ item.name }}</p>
+                    <p class="summary-number small">€{{ item.amount }}</p>
+                    <p class="summary-number color-number small">%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="income" class="summary_category">
+                <p class="category-name">Income</p>
+                {% for item in data.income %}
+                <div class="summary_item">
+                    <p class="summary-title small">{{ item.name }}</p>
+                    <p class="summary-number small">€{{ item.amount }}</p>
+                    <p class="summary-number color-number small">%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div id="summary" class="summary_category">
+                <p class="category-name">Summary</p>
+                {% for item in data.summary %}
+                <div class="summary_item">
+                    <p class="summary-title small">{{ item.name }}</p>
+                    <p class="summary-number color-number small">€{{ item.amount }}</p>
+                    <p class="summary-number color-number small">%{{ item.diff }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

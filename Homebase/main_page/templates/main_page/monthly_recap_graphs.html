@@ -1,0 +1,12 @@
+<div id="monthly_recap_graphs_content">
+    {% for item in graph_data %}
+    <div id="{{ item.name }}">
+        <p>{{ item.name }}</p>
+        <div id="graph-div-{{ item.name }}">
+            <p id="graph-data-{{ item.formated_name }}" data="{{ item.data.data }}"></p>
+            <p id="graph-labels-{{ item.formated_name }}" data="{{ item.data.label }}"></p>
+            <canvas id="graph-canvas-{{ item.formated_name }}" class="graph-canvas" name="{{ item.formated_name}}"></canvas>
+        </div>
+    </div>
+    {% endfor %}
+</div>

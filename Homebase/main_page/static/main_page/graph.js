@@ -1,12 +1,53 @@
 $(document).ready(function(){
-    const spending_graph = document.getElementById('spending-graph-canvas');
-    const income_graph = document.getElementById('income-graph-canvas');
+    const current_url = window.location.href
+    const current_page = current_url.split("/")[current_url.split("/").length - 1]
+    console.log("CURRENT PAGE", current_page)
 
-    const spending_graph_data = getSpendingGraphData()
-    const income_graph_data = getIncomeGraphData()
+    if (current_page == "budget"){
+        const spending_graph = document.getElementById('spending-graph-canvas');
+        const income_graph = document.getElementById('income-graph-canvas');
 
-    getGraph(spending_graph, spending_graph_data["labels"], spending_graph_data["data"])
-    getGraph(income_graph, income_graph_data["labels"], income_graph_data["data"])
+        const spending_graph_data = getSpendingGraphData()
+        const income_graph_data = getIncomeGraphData()
+
+        getGraph(spending_graph,
+            "doughnut",
+            "€",
+            spending_graph_data["labels"],
+            spending_graph_data["data"])
+        getGraph(income_graph,
+            "doughnut",
+            "€",
+            income_graph_data["labels"],
+            income_graph_data["data"])
+    } else if (current_page == "monthly_recap"){
+        console.log("Correct graph else")
+        $(".graph-canvas").map(function(){
+            const graph_name = $(this).attr("name")
+
+            console.log(graph_name)
+            const raw_data = $("#graph-data-" + graph_name).attr("data")
+            const raw_label = $("#graph-labels-" + graph_name).attr("data")
+
+            console.log(raw_data)
+            console.log(raw_label)
+
+            const data = JSON.parse(raw_data.replace(/'/g, '"'))
+            const label = JSON.parse(raw_label.replace(/'/g, '"'))
+
+            console.log(data)
+            console.log(label)
+            console.log("")
+
+            const graph_canvas = $("#graph-canvas-" + graph_name)
+            getGraph(graph_canvas,
+                "line",
+                "€",
+                label,
+                data)
+        })
+    }
+    
 })
 
 function getSpendingGraphData(){
@@ -25,7 +66,7 @@ function getSpendingGraphData(){
         "labels": labels,
         "data": data
     };
-    console.log(return_dict)
+    //console.log(return_dict)
     return return_dict
 }
 
@@ -45,17 +86,17 @@ function getIncomeGraphData(){
         "labels": labels,
         "data": data
     };
-    console.log(return_dict)
+    //console.log(return_dict)
     return return_dict
 }
 
-function getGraph(object, labels, data){
+function getGraph(object, type, unit_label, labels, data){
     new Chart(object, {
-        type: 'doughnut',
+        type: type,
         data: {
         labels: labels,
         datasets: [{
-            label: '€',
+            label: unit_label,
             data: data,
             backgroundColor:[
                 "rgb(182, 203, 158)",
@@ -71,6 +112,10 @@ function getGraph(object, labels, data){
                 legend: {
                     display: false
                 }
+            },
+            chartOptions: {
+                responsivenes: true,
+                maintainAspectRatio: true,
             }
         }
     });
