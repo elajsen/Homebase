@@ -97,7 +97,7 @@ def monthly_recap(request):
     if request.method == "GET":
         monthly_recap = budget_handler.get_monthly_recap()
         graph_data = budget_handler.get_monthly_recap_graphs(monthly_recap)
-    pprint(graph_data)
+    # pprint(graph_data)
     context = {
         "monthly_recap": monthly_recap,
         "graph_data": graph_data

@@ -13,7 +13,7 @@ class BudgetHandler:
         self.bbva_scraper = BBVAScraper(headless=True)
         self.mongo_handler = MongoHandler()
         self.salary = 1733.84
-        self.savings = 100
+        self.savings = 200
 
     def res_dictionary_to_df(self, res_dictionary):
         columns = ["date"]
@@ -374,18 +374,23 @@ class BudgetHandler:
         return final_output
 
     def get_monthly_recap_graphs(self, monthly_recap_dict):
+        pprint(monthly_recap_dict)
         res_dict = {}
         for month, month_dict in monthly_recap_dict.items():
             flattened_dict = month_dict.get(
                 "income") + month_dict.get("spending") + month_dict.get("summary")
             for item in flattened_dict:
                 if item.get("name") not in res_dict.keys():
-                    res_dict[item.get("name")] = {"data": [], "label": []}
+                    res_dict[item.get("name")] = {
+                        "data": [], "label": [], "diff": []}
 
                 res_dict[item.get("name")].get(
                     "data").append(item.get("amount"))
                 res_dict[item.get("name")].get(
                     "label").append(month)
+                diff = item.get("diff") if item.get("diff") is not None else 0
+                res_dict[item.get("name")].get(
+                    "diff").append(diff)
 
         formatted_res = []
         for name, data in res_dict.items():

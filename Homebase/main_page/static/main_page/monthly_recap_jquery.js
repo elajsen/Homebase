@@ -38,8 +38,15 @@ function searchGraph(){
     const searchTerm = $("#monthly-recap-graph-searchbar").val()
     
     $(".graph-modal").map(function(){
-        if (!$(this).attr("id").includes(searchTerm)){
+        if (searchTerm == ""){
+            $(this).show()
+        } 
+
+        if (!$(this).attr("id").toLowerCase().includes(searchTerm)){
             $(this).hide();
+        }
+        if ($(this).attr("id").toLowerCase().includes(searchTerm)){
+            $(this).show();
         }
     })
 }
