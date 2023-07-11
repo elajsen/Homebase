@@ -24,11 +24,6 @@ function update_amounts(){
 
     const total_bills = $("#bills").attr("total_bills")
 
-    console.log("total_spending", total_spending)
-    console.log("salary", salary)
-    console.log("savings", savings)
-    console.log("total bills", total_bills)
-
     const new_net = Number((salary - total_spending - savings - total_bills).toFixed(2))
 
     const days = $(".budget_modal").map(function() {
@@ -77,8 +72,7 @@ function update_total_spending(){
         console.log(number_string)
         new_total_amount -= Number(number_string)
     })
-    console.log("Total")
-    console.log(new_total_amount)
+
     $("#budget-modal-section").attr("total_spending", new_total_amount)
 }
 

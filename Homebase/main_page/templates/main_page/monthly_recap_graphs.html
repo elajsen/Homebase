@@ -1,8 +1,11 @@
+<div id="monthly-recap-graph-search">
+    <input type="text" id="monthly-recap-graph-searchbar">
+</div>
 <div id="monthly_recap_graphs_content">
     {% for item in graph_data %}
-    <div id="{{ item.name }}">
+    <div id="{{ item.name }}" class="graph-modal">
         <p>{{ item.name }}</p>
-        <div id="graph-div-{{ item.name }}">
+        <div id="graph-div-{{ item.name }}" class="graph-div-monthly-recap">
             <p id="graph-data-{{ item.formated_name }}" data="{{ item.data.data }}"></p>
             <p id="graph-labels-{{ item.formated_name }}" data="{{ item.data.label }}"></p>
             <canvas id="graph-canvas-{{ item.formated_name }}" class="graph-canvas" name="{{ item.formated_name}}"></canvas>

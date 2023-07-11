@@ -258,6 +258,10 @@ body{
 }
 
 /* --------MONTHLY RECAP ---------*/
+#monthly_recap_graph{
+    display: flex;
+    flex-direction: column;
+}
 
 /* --------navbar ---------*/
 #monthly_recap_div{
@@ -270,7 +274,8 @@ body{
     display: flex;
     flex-direction: row;
     justify-content: space-around;
-    flex: 1 1 0
+    flex: 1 1 0;
+    margin: 2rem 0 0 0;
 }
 
 #monthly_recap_navbar a{
@@ -348,3 +353,21 @@ body{
 }
 
 /* -------- monthly_recap_graphs ---------*/
+#monthly_recap_graphs_content{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+
+.graph-modal{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 30vw;
+}
+
+.graph-div-monthly-recap{
+    display:flex;
+    flex: 1 1 20vw;
+}

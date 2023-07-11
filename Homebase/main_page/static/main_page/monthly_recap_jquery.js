@@ -34,10 +34,24 @@ function colorCodeNumbers(){
     })
 }
 
+function searchGraph(){
+    const searchTerm = $("#monthly-recap-graph-searchbar").val()
+    
+    $(".graph-modal").map(function(){
+        if (!$(this).attr("id").includes(searchTerm)){
+            $(this).hide();
+        }
+    })
+}
+
 $(document).ready(function(){
     colorCodeNumbers()
 
     $(".monthly-recap-navbar-item").click(function() {
         navbarHandler.call(this);
+    })
+
+    $("#monthly-recap-graph-searchbar").on("input", function(){
+        searchGraph();
     })
 })

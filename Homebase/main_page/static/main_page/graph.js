@@ -25,21 +25,14 @@ $(document).ready(function(){
         $(".graph-canvas").map(function(){
             const graph_name = $(this).attr("name")
 
-            console.log(graph_name)
             const raw_data = $("#graph-data-" + graph_name).attr("data")
             const raw_label = $("#graph-labels-" + graph_name).attr("data")
-
-            console.log(raw_data)
-            console.log(raw_label)
 
             const data = JSON.parse(raw_data.replace(/'/g, '"'))
             const label = JSON.parse(raw_label.replace(/'/g, '"'))
 
-            console.log(data)
-            console.log(label)
-            console.log("")
-
             const graph_canvas = $("#graph-canvas-" + graph_name)
+
             getGraph(graph_canvas,
                 "line",
                 "€",
@@ -114,6 +107,7 @@ function getGraph(object, type, unit_label, labels, data){
                 }
             },
             chartOptions: {
+                responsive: true,
                 responsivenes: true,
                 maintainAspectRatio: true,
             }
