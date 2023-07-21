@@ -197,7 +197,7 @@ class BudgetHandler:
             elif vector.get("name") in ["Ingreso Bizum",
                                         "Pendiente de categorizar ingresos",
                                         "other income",
-                                        "Nómina"]:
+                                        "Nómina", "Transferencia recibida"]:
                 income.append(vector)
             else:
                 spending.append(vector)
