@@ -35,6 +35,14 @@
             <p class="medium">Week {{ week.week }}</p>
             <p class="small grey-text" id="week_{{ week.week }}_dates">{{ week.dates }}</p>
             <p class="xlarge" id="week_amount_{{ week.week }}">€{{ week.amount }}</p>
+            <div id="week-categories">
+                {% for category in week.categories %}
+                <div class="budget-modal-category-div">
+                    <p class="small">{{ category.name }}:</p>
+                    <p class="small">€{{ category.value }}</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>

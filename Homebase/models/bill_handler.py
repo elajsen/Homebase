@@ -1,6 +1,8 @@
 import selenium
 import time
 import re
+import os
+import platform
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime, date
@@ -30,7 +32,6 @@ class BillHandler:
         basic_fit_dates = self.basic_fit_handler.get_dates()
         orange_dates = self.orange_handler.get_dates()
         csn_dates = self.csn_handler.get_dates()
-        print(basic_fit_dates, orange_dates, csn_dates)
 
         return basic_fit_dates + orange_dates + csn_dates
 
@@ -50,6 +51,60 @@ class PageHandlerParent:
     def __init__(self):
         self.mongo_handler = MongoHandler()
         self.page = None
+
+    def find_chrome_binary_path(self):
+        system = platform.system()
+
+        if system == "Windows":
+            # Windows Chrome binary path
+            program_files = os.environ.get("PROGRAMFILES", "C:\\Program Files")
+            chrome_binary_path = os.path.join(
+                program_files, "Google", "Chrome", "Application", "chrome.exe")
+        elif system == "Darwin":
+            # macOS Chrome binary path
+            chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        else:
+            # Linux Chrome binary path
+            # Or "/usr/bin/google-chrome-stable" for some distributions
+            chrome_binary_path = "/usr/bin/google-chrome"
+
+        return chrome_binary_path
+
+    def find_chromedriver_path(self):
+        # Get the current directory path
+        current_directory = os.getcwd()
+
+        # Check if the "chromedriver" executable exists in the current directory
+        chromedriver_filename = "chromedriver"
+        chromedriver_path = os.path.join(
+            current_directory, chromedriver_filename)
+
+        if os.path.exists(chromedriver_path):
+            return chromedriver_path
+        else:
+            return None
+
+    def get_driver(self, headless):
+        chrome_options = webdriver.ChromeOptions()
+
+        if headless:
+            chrome_options.add_argument("--headless=new")
+
+        chrome_options.add_argument("--icognito")
+        chrome_options.add_argument(
+            '--disable-blink-features=AutomationControlled')
+
+        """
+        driver = webdriver.Chrome(
+            ChromeDriverManager().install(), chrome_options=chrome_options)
+        """
+        driver_route = self.find_chromedriver_path()
+        chrome_options.binary_location = self.find_chrome_binary_path()
+        # print(f"Driver Route: {driver_route}")
+        driver = webdriver.Chrome(
+            executable_path=driver_route, chrome_options=chrome_options
+        )
+        return driver
 
     def str_to_date(self, str):
         split_str = str.split("-")
@@ -84,20 +139,6 @@ class BasicFitHandler(PageHandlerParent):
         self.amount = 19.99
 
         self.page = "basic-fit"
-
-    def get_driver(self, headless):
-        chrome_options = webdriver.ChromeOptions()
-
-        if headless:
-            chrome_options.add_argument("--headless=new")
-
-        chrome_options.add_argument("--icognito")
-        chrome_options.add_argument(
-            '--disable-blink-features=AutomationControlled')
-
-        driver = webdriver.Chrome(
-            ChromeDriverManager().install(), chrome_options=chrome_options)
-        return driver
 
     def get_date(self):
         self.driver.get("https://my.basic-fit.com/payments")
@@ -181,26 +222,16 @@ class OrangeHandler(PageHandlerParent):
         )
         return element
 
-    def get_driver(self, headless):
-        chrome_options = webdriver.ChromeOptions()
-
-        if headless:
-            chrome_options.add_argument("--headless=new")
-
-        chrome_options.add_argument("--icognito")
-        chrome_options.add_argument(
-            '--disable-blink-features=AutomationControlled')
-
-        driver = webdriver.Chrome(
-            ChromeDriverManager().install(), chrome_options=chrome_options)
-        return driver
-
     def log_in(self, username, pswrd):
-        element = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//div[@id='consent_prompt_submit']"))
-        )
-        element.click()
+        try:
+            element = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located(
+                    (By.XPATH, "//div[@id='consent_prompt_submit']"))
+            )
+            element.click()
+        except:
+            print("Couldn´t accept prompt")
+
         user_el = self.find_element_with_wait(
             by=By.XPATH, value="//input[@placeholder='Usuario']")
         pswrd_el = self.driver.find_element(
@@ -230,7 +261,7 @@ class OrangeHandler(PageHandlerParent):
         return format_date
 
     def get_orange_date(self):
-        self.driver = self.get_driver(True)
+        self.driver = self.get_driver(False)
         self.driver.get("https://areaprivada.orange.es")
 
         self.log_in(self.username, self.pswrd)
@@ -246,6 +277,6 @@ class CSNHandler(PageHandlerParent):
 
     def get_csn_dates(self):
         return {
-            "2023-08-31": 3953,
-            "2023-11-30": 3953
+            "2023-08-31": 341,
+            "2023-11-30": 341
         }

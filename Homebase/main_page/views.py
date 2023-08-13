@@ -31,6 +31,7 @@ def budget(request):
             budget_handler.update_backlog()
         elif data.get("type") == "update_monthly_budget":
             budget_handler.update_monthly_budget()
+            budget_handler.update_current_month_movements()
         elif data.get("type") == "update_bills":
             print("Update bills")
             bill_handler.update_dates()
@@ -68,7 +69,6 @@ def budget(request):
             }
             return JsonResponse(context)
 
-    print(f"Total Spending {current_budget.get('total_spending')}")
     context = {
         "current_month": str(datetime.today().date())[:7],
         "budget": current_budget.get("week_dict"),

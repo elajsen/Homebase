@@ -193,6 +193,17 @@ body{
     margin:0.4em;
 }
 
+#week-categories{
+    display: flex;
+    flex-direction: column;
+}
+
+.budget-modal-category-div{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
 /*---- SPENDING INCOME----*/
 .spending-income-bill-modal{
     display: flex;

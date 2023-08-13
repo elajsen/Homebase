@@ -1,6 +1,8 @@
 import selenium
 import time
 import re
+import os
+import platform
 import pandas as pd
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import datetime, date
@@ -19,6 +21,8 @@ class BBVAScraper:
         self.username = settings.CREDENTIALS["bbva"]["username"]
         self.pswrd = settings.CREDENTIALS["bbva"]["password"]
 
+        self.logged_in = False
+
         self.month_translation_dict = {
             "DIC": 12,
             "NOV": 11,
@@ -34,6 +38,38 @@ class BBVAScraper:
             "ENE": 1
         }
 
+    def find_chromedriver_path(self):
+        # Get the current directory path
+        current_directory = os.getcwd()
+
+        # Check if the "chromedriver" executable exists in the current directory
+        chromedriver_filename = "chromedriver"
+        chromedriver_path = os.path.join(
+            current_directory, chromedriver_filename)
+
+        if os.path.exists(chromedriver_path):
+            return chromedriver_path
+        else:
+            return None
+
+    def find_chrome_binary_path(self):
+        system = platform.system()
+
+        if system == "Windows":
+            # Windows Chrome binary path
+            program_files = os.environ.get("PROGRAMFILES", "C:\\Program Files")
+            chrome_binary_path = os.path.join(
+                program_files, "Google", "Chrome", "Application", "chrome.exe")
+        elif system == "Darwin":
+            # macOS Chrome binary path
+            chrome_binary_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+        else:
+            # Linux Chrome binary path
+            # Or "/usr/bin/google-chrome-stable" for some distributions
+            chrome_binary_path = "/usr/bin/google-chrome"
+
+        return chrome_binary_path
+
     def get_driver(self, headless):
         chrome_options = webdriver.ChromeOptions()
 
@@ -44,8 +80,16 @@ class BBVAScraper:
         chrome_options.add_argument(
             '--disable-blink-features=AutomationControlled')
 
+        """
         driver = webdriver.Chrome(
             ChromeDriverManager().install(), chrome_options=chrome_options)
+        """
+        driver_route = self.find_chromedriver_path()
+        chrome_options.binary_location = self.find_chrome_binary_path()
+        # print(f"Driver Route: {driver_route}")
+        driver = webdriver.Chrome(
+            executable_path=driver_route, chrome_options=chrome_options
+        )
         return driver
 
     def get_dates(self):
@@ -100,7 +144,12 @@ class BBVAScraper:
             value="iframe"
         )
         iframe = self.driver.find_elements_by_tag_name("iframe")
-        self.driver.switch_to.frame(iframe[0])
+        try:
+            assert False
+            self.driver.switch_to.frame(iframe[0])
+            print("switched to iframe")
+        except:
+            print("Couldn't switch to iframe")
 
     def switch_to_default(self):
         self.driver.switch_to.default_content()
@@ -124,7 +173,8 @@ class BBVAScraper:
             year = datetime.today().year
 
         month_regex = "[A-Z]{3}."
-        month = re.findall(month_regex, date_el.get_attribute("innerHTML"))[
+        element_month_text = date_el.get_attribute("innerHTML")
+        month = re.findall(month_regex, element_month_text)[
             0].replace(".", "")
         month = self.month_translation_dict.get(month)
 
@@ -140,21 +190,46 @@ class BBVAScraper:
             .replace(" ", "").replace("€", "")
         return amount
 
+    def get_concept_from_mov_element(self, mov_element):
+        concept = mov_element\
+            .find_element(by=By.CLASS_NAME,
+                          value="concepto")\
+            .get_attribute("innerHTML")
+        return concept.strip()
+
+    def get_description_from_mov_element(self, mov_element):
+        description = mov_element\
+            .find_element(by=By.XPATH,
+                          value="//div[@class='descripcionEspecifica']")\
+            .find_element(by=By.TAG_NAME,
+                          value="b")\
+            .get_attribute("innerHTML")
+        return description.strip()
+
     def get_data_from_mov_element(self, mov_element):
+
+        id = mov_element.get_attribute("data-movement-id")
         date = self.get_date_from_mov_element(mov_element)
-
         category = self.get_category_from_mov_element(mov_element)
-
         amount = self.get_amount_from_mov_element(mov_element)
+        concept = self.get_concept_from_mov_element(mov_element)
+        description = self.get_description_from_mov_element(mov_element)
 
         return {
+            "id": id,
             "date": str(date),
+            "description": description,
+            "concept": concept,
             "category": category,
             "amount": amount
         }
 
     def log_in(self):
         # Cookies
+        if self.logged_in:
+            return
+        self.driver = self.get_driver(self.headless)
+        self.driver.get("https://www.bbva.es/")
         try:
             self.find_element_with_wait(
                 by=By.XPATH,
@@ -183,13 +258,38 @@ class BBVAScraper:
         el[0].send_keys(self.username)
         el[1].send_keys(self.pswrd)
 
-        self.get_item_by_text("Entrar").click()
+        btn = self.find_elements_with_wait(
+            by=By.XPATH,
+            value="//*[@data-lit-component='button']")[0]
+        btn.click()
+
+        tries = 0
+        continue_ = True
+        while continue_:
+            try:
+                self.switch_to_default()
+
+                self.close_modal()
+
+                continue_ = False
+            except:
+                if tries > 4:
+                    continue_ = False
+
+                time.sleep(2)
+                tries += 1
+
+        self.logged_in = True
 
     def go_to_categories(self):
+        if "#dashboard/pfm/gastos" in self.driver.current_url:
+            return
         start = self.driver.current_url.split("#")[0]
         self.driver.get(start + "#dashboard/pfm/gastos")
 
     def go_to_movements(self):
+        if "#cuentas/1/ficha" in self.driver.current_url:
+            return
         start = self.driver.current_url.split("#")[0]
         self.driver.get(start + "#cuentas/1/ficha")
 
@@ -261,56 +361,67 @@ class BBVAScraper:
 
         return res
 
+    def filter_for_current_month(self):
+        self.find_element_with_wait(by=By.XPATH,
+                                    value="//span[@data-testid='consultas']").click()
+        start_date = datetime.today().date().replace(day=1)
+        end_date = datetime.today().date()
+
+        if start_date == datetime.today().date():
+            return
+
+        formated_start_date = "/".join(str(start_date).split("-")[::-1])
+        formated_end_date = "/".join(str(end_date).split("-")[::-1])
+
+        start = self.find_element_with_wait(by=By.XPATH,
+                                            value="//input[@name='filtros.fechas.inicio']")
+        print(start)
+        time.sleep(5)
+        start.clear()
+        start.send_keys(formated_start_date)
+
+        end = self.find_element_with_wait(by=By.XPATH,
+                                          value="//input[@name='filtros.fechas.fin']")
+        end.clear()
+        end.send_keys(formated_end_date)
+
+        btn_span = self.find_element_with_wait(by=By.XPATH,
+                                               value="//span[@data-testid='boton-buscar-movimiento']")
+        btn_span.click()
+
+    def scroll_to_show_all_movements(self):
+
+        mostrar_mas = self.find_elements_with_wait(by=By.CLASS_NAME,
+                                                   value="botonMostrarMas")
+
+        while True:
+            if len(mostrar_mas) > 0:
+                self.driver.execute_script(
+                    "arguments[0].scrollIntoView();", mostrar_mas[0])
+
+                try:
+                    mostrar_mas[0].click()
+                except:
+                    return
+
     def get_current_month_categories(self):
-        self.driver = self.get_driver(self.headless)
-        self.driver.get("https://www.bbva.es/")
 
         self.log_in()
-
-        tries = 0
-        continue_ = True
-        while continue_:
-            try:
-                self.switch_to_default()
-
-                self.close_modal()
-
-                continue_ = False
-            except:
-                if tries > 4:
-                    continue_ = False
-
-                time.sleep(2)
-                tries += 1
 
         self.go_to_categories()
 
         categories = self.get_category_information()
 
-        self.driver.quit()
+        self.go_to_movements()
+
+        retentions = self.get_retentions()
+        categories["Retentions"] = retentions
+
+        # self.driver.quit()
         return categories
 
     def get_backlog_month_categories(self):
-        self.driver = self.get_driver(self.headless)
-        self.driver.get("https://www.bbva.es/")
-
         self.log_in()
-
-        tries = 0
-        continue_ = True
-        while continue_:
-            try:
-                self.switch_to_default()
-
-                self.close_modal()
-
-                continue_ = False
-            except:
-                if tries > 4:
-                    continue_ = False
-
-                time.sleep(2)
-                tries += 1
 
         self.go_to_categories()
 
@@ -331,22 +442,52 @@ class BBVAScraper:
 
         return res_dict
 
-    def get_most_recent_movements(self):
-        self.driver = self.get_driver(self.headless)
-        self.driver.get("https://www.bbva.es/")
+    def get_retentions(self):
+        retention_element = self.find_element_with_wait(by=By.CLASS_NAME,
+                                                        value="c-encabezado-descripcionProducto__retenciones-amount")
 
+        retention = retention_element.get_attribute("innerHTML")\
+            .replace("€", "").replace("-", "").replace(",", ".")
+        print(f"retention: {float(retention)}")
+        return float(retention)
+
+    def get_most_recent_movements(self):
         self.log_in()
 
         self.go_to_movements()
 
+        print("Filter for movements")
+        self.filter_for_current_month()
+        time.sleep(1)
+
+        self.scroll_to_show_all_movements()
+
+        print("Get movements from page")
         movement_elements = self.get_movements_from_page()
 
         data = []
-        columns = ["date", "category", "amount"]
-        for mov in movement_elements:
+        columns = ["id", "date", "description", "concept",
+                   "category", "amount"]
+        for index, mov in enumerate(movement_elements):
+            print(f"Element: {index}")
             mov_data = self.get_data_from_mov_element(mov)
+            print(mov_data)
 
-            data.append([mov_data.get("date"), mov_data.get(
-                "category"), mov_data.get("amount")])
+            data.append([
+                mov_data.get("id"),
+                mov_data.get("date"),
+                mov_data.get("description"),
+                mov_data.get("concept"),
+                mov_data.get("category"),
+                mov_data.get("amount")])
 
-        return pd.DataFrame(data, columns=columns)
+        self.driver.quit()
+
+        df = pd.DataFrame(data, columns=columns)
+
+        df["amount"] = df["amount"].str.replace(".", "")
+        df["amount"] = df["amount"].str.replace(",", ".")
+        df["amount"] = pd.to_numeric(df["amount"])
+        df["date"] = pd.to_datetime(df["date"])
+
+        return df

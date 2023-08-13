@@ -1,6 +1,7 @@
 from models.BBVA_scraper import BBVAScraper
 from models.mongo_handler import MongoHandler
 import pandas as pd
+import numpy as np
 import re
 import time
 from datetime import datetime, date, timedelta
@@ -10,7 +11,7 @@ from pprint import pprint
 
 class BudgetHandler:
     def __init__(self):
-        self.bbva_scraper = BBVAScraper(headless=True)
+        self.bbva_scraper = BBVAScraper(headless=False)
         self.mongo_handler = MongoHandler()
         self.salary = 1733.84
         self.savings = 200
@@ -46,6 +47,9 @@ class BudgetHandler:
                                "amount": list(vector.values())[0],
                                "icon": icon_dict.get(key, "")})
 
+        final_list = self.add_bills_if_empty(
+            final_list, icon_dict.get("Hogar", ""))
+
         return final_list
 
     def get_current_spending(self, df, current_month, spending_and_income):
@@ -61,12 +65,9 @@ class BudgetHandler:
                     if len(other_income) == 0:
                         print("NO OTHER INCOME SKIPPING")
                         continue
-                print(f"{key}: income: {list(item.values())[0]}")
                 total_spending -= list(item.values())[0]
             else:
-                print(f"{key}: spending: {list(item.values())[0]}")
                 total_spending += list(item.values())[0]
-        print(f"Total spending {total_spending}")
         return round(total_spending, 2)
 
     def get_weeks_in_month(self, month=None):
@@ -100,6 +101,12 @@ class BudgetHandler:
                 cont = False
 
         return weeks
+
+    def filter_for_weeks_in_month(self, week_list):
+        week_list[0][0] = week_list[0][1].replace(day=1)
+        week_list[-1][-1] = week_list[0][0] + \
+            relativedelta(months=1) - relativedelta(days=1)
+        return week_list
 
     def get_remaining_weeks(self, weeks_in_month):
         current_date = datetime.today().date()
@@ -143,6 +150,11 @@ class BudgetHandler:
         res_dictionary = self.bbva_scraper.get_backlog_month_categories()
 
         self.mongo_handler.update_budget_history(res_dictionary)
+
+    def update_current_month_movements(self):
+        res_df = self.bbva_scraper.get_most_recent_movements()
+
+        self.mongo_handler.update_budget_movements(res_df)
 
     def update_monthly_budget(self):
 
@@ -231,6 +243,19 @@ class BudgetHandler:
 
         return list(last_month_df.get("Hogar").values())[0]
 
+    def add_bills_if_empty(self, item_list, hogar_icon):
+        for item in item_list:
+            if item.get("name") == "Hogar":
+                return item_list
+
+        item_list.append({
+            "name": "Hogar",
+            "amount": 0,
+            "icon": hogar_icon
+        })
+
+        return item_list
+
     def get_monthly_budget(self):
         print("Get Monthly Budget")
 
@@ -273,6 +298,11 @@ class BudgetHandler:
                 "remaining_days": vector.get("remaining_days"),
                 "week": str(index + 1)
             })
+
+        weekly_categories = self.get_current_month_movements()
+
+        for week in week_dict:
+            week["categories"] = weekly_categories.get(week.get("week"))
 
         return {
             "week_dict": week_dict,
@@ -356,8 +386,11 @@ class BudgetHandler:
 
                     amount_d_1 = item_d_1.get("amount")
 
-                    item_d["diff"] = round(
-                        ((amount_d - amount_d_1) / abs(amount_d))*100, 2)
+                    try:
+                        item_d["diff"] = round(
+                            ((amount_d - amount_d_1) / abs(amount_d))*100, 2)
+                    except:
+                        print(item_d)
 
             # pprint(month_d)
         return monthly_expenses_with_profit_and_totals
@@ -419,3 +452,62 @@ class BudgetHandler:
         reversed_structured_monthly_recap = sorted_dict
 
         return reversed_structured_monthly_recap
+
+    def mark_weeks(self, df, week_list):
+        df["week"] = 0
+
+        for index, week_range in enumerate(week_list):
+            df["start"] = week_range[0]
+            df["end"] = week_range[1]
+            df["check1"] = df["date"] >= df["start"]
+            df["check2"] = df["date"] <= df["end"]
+            df["week"] = np.where(
+                (df["check1"] & df["check2"]), index+1, df["week"])
+
+        df = df.drop(columns=["start", "end", "check1", "check2"])
+        return df
+
+    def get_current_month_movs(self, movs):
+        weeks = self.get_weeks_in_month()
+        weeks_in_month = self.filter_for_weeks_in_month(weeks)
+
+        movs_with_weeks_marked = self.mark_weeks(movs, weeks_in_month)
+        movs_for_this_month = movs_with_weeks_marked[movs_with_weeks_marked["week"] != 0]
+        return movs_for_this_month
+
+    def get_category_sum_per_week(self, df):
+        weekly_categorical_spending = df.groupby(
+            by=["week", "category"])["amount"].sum()
+        return weekly_categorical_spending
+
+    def sum_df_to_dict(self, movs):
+        to_keep = ["Compras", "Ocio"]
+        dict_df = movs.to_dict()
+        formated_dict = {}
+
+        for key, value in dict_df.items():
+            week = str(key[0])
+            cat = key[1]
+
+            if cat not in to_keep:
+                continue
+
+            if week not in formated_dict.keys():
+                formated_dict[week] = []
+
+            formated_dict[week].append({
+                "name": cat,
+                "value": round(value, 2)
+            })
+
+        return formated_dict
+
+    def get_current_month_movements(self):
+        movs = self.mongo_handler.get_budget_movements()
+
+        movs_from_current_month = self.get_current_month_movs(movs)
+        sum_by_week_and_category = self.get_category_sum_per_week(
+            movs_from_current_month)
+        final = self.sum_df_to_dict(sum_by_week_and_category)
+
+        return final
