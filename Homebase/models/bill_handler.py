@@ -52,6 +52,8 @@ class PageHandlerParent:
         self.mongo_handler = MongoHandler()
         self.page = None
 
+        self.chromedriver_filename = "chromedriver_125_x64"
+
     def find_chrome_binary_path(self):
         system = platform.system()
 
@@ -75,9 +77,8 @@ class PageHandlerParent:
         current_directory = os.getcwd()
 
         # Check if the "chromedriver" executable exists in the current directory
-        chromedriver_filename = "chromedriver"
         chromedriver_path = os.path.join(
-            current_directory, chromedriver_filename)
+            current_directory, self.chromedriver_filename)
 
         if os.path.exists(chromedriver_path):
             return chromedriver_path
@@ -197,7 +198,7 @@ class BasicFitHandler(PageHandlerParent):
         time.sleep(2)
 
     def get_basic_fit_date(self):
-        self.driver = self.get_driver(True)
+        self.driver = self.get_driver(False)
 
         self.driver.get("https://my.basic-fit.com/")
 
@@ -217,7 +218,7 @@ class OrangeHandler(PageHandlerParent):
         self.page = "orange"
 
     def find_element_with_wait(self, by=None, value=None):
-        element = WebDriverWait(self.driver, 10).until(
+        element = WebDriverWait(self.driver, 30).until(
             EC.presence_of_element_located((by, value))
         )
         return element
@@ -244,7 +245,7 @@ class OrangeHandler(PageHandlerParent):
             by=By.XPATH, value="//button[@type='submit']").click()
 
     def get_date(self):
-        self.driver.get("https://areaprivada.orange.es/soycliente/mi-linea")
+        self.driver.get("https://areaprivada.orange.es/soycliente/mi-linea/conocer-mi-tarifa/detalle-tarifa")
 
         element = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located(

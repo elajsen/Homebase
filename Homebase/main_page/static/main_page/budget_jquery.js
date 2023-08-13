@@ -7,7 +7,7 @@ function check_last_update(){
     const current_date_str = get_current_date().split(".")[0]
 
     const last_update_date_str = $("#last_update_date").html().split(": ")[1]
-    
+
     const last_update_date = new Date(last_update_date_str)
     const current_date = new Date(current_date_str)
 
@@ -21,6 +21,7 @@ function update_amounts(){
     const total_spending = $("#budget-modal-section").attr("total_spending")
     const salary = $("#budget_salary").val()
     const savings = $("#budget_savings").val()
+    localStorage["budget_savings"] = savings
 
     const total_bills = $("#bills").attr("total_bills")
 
@@ -34,6 +35,9 @@ function update_amounts(){
 
     $(".budget_modal").map(function() {
         var new_amount = Number(((new_net / total_days) * this.getAttribute("remaining_days")).toFixed(2))
+        console.log("New amout -> ", new_amount, " Days -> ", this.getAttribute("remaining_days"), " week -> ")
+        console.log(this)
+
         var week = $(this).attr("id").split("_")[1]
         $("#week_amount_" + week).html("€" + new_amount)
     });
@@ -51,7 +55,6 @@ function handle_bills(){
     if (!value){
         bill_amounts = 0
     }
-
     $("#bills").attr("total_bills", bill_amounts.toFixed(2))
     update_amounts()
 }
@@ -61,15 +64,11 @@ function update_total_spending(){
 
     $(".spending-amount").map(function() {
         const number_string = $(this).html().replace("€", "")
-        console.log("Spending")
-        console.log(number_string)
         new_total_amount += Number(number_string)
     })
 
     $(".income-amount").map(function() {
         const number_string = $(this).html().replace("€", "")
-        console.log("Income")
-        console.log(number_string)
         new_total_amount -= Number(number_string)
     })
 
@@ -77,7 +76,7 @@ function update_total_spending(){
 }
 
 function handle_last_month_bills(){
-    console.log("running function")
+    // console.log("running function")
 
     const is_checked = $("#last-month-bills-checkbox").is(":checked");
     const type = $("#last_month_spending").attr("type")
@@ -103,7 +102,13 @@ function handle_last_month_bills(){
     update_amounts();
 }
 
+function load_cache_data(){
+    var cache_savings = localStorage["budget_savings"] || null
+    $("#budget_savings").val(cache_savings)
+}
+
 $(document).ready(function(){
+    load_cache_data()
     check_last_update()
     handle_bills()
     handle_last_month_bills()

@@ -1,0 +1,415 @@
+body{
+    display: flex;
+    flex-direction: row;
+
+    font-family: 'Oswald', sans-serif;
+    font-weight: lighter;
+}
+
+.top_bar{
+    position:fixed;
+    top:0;
+    left:0;
+    height:100%;
+    z-index:2;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+    width: 7%;
+    background-color: rgb(182 203 158);
+}
+
+.top_bar_text{
+    display:flex;
+    font-family: 'Oswald', sans-serif;
+    text-align: center;
+    width: 100%;
+}
+
+.top_bar_text:hover{
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#main-content{
+    display:flex;
+    margin: 0 0 0 7%;
+    flex-grow:1;
+}
+
+#navbar_modal{
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(182 203 158);
+    position: absolute;
+    padding:1rem;
+    width: 20vw;
+    height: 15vw;
+    z-index:1;
+
+    justify-content: space-evenly;
+    align-items: center;
+
+    animation-duration: 0.5s;
+    animation-name: modal-slide;
+}
+
+#navbar_modal a{
+    text-align: center;
+}
+
+@keyframes modal-slide{
+    from {
+        left: -20vw
+    }
+
+    to {
+        left: 7%;
+    }
+}
+
+/*
+.modal{
+    box-shadow:  3px 3px 2px 2px rgba(0,0,0,0.5);
+    border-radius: 5%;
+    margin:1em;
+    padding:1em;
+}*/
+
+/*---- BUDGET PAGE ----*/
+#budget_page{
+    display: flex;
+    flex-direction: column;
+    padding: 2em;
+    width:100%;
+}
+
+/*---- TOP PART ----*/
+#top-part{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/*---- OVERVIEW ----*/
+#overview{
+    display: flex;
+    flex-direction: column;
+    margin-left:1em;
+}
+
+#overview-text{
+    text-decoration: underline;
+}
+
+#saving_salary{
+    display: flex;
+    flex-direction: row;
+}
+
+#salary-saving-texts{
+    margin-right:2em;
+}
+
+.overview_salary_save{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+
+.overview_salary_save input{
+    height:1.5em;
+    width:50%;
+    border: none;
+}
+
+.small{
+    font-size: 0.8em;
+}
+
+.medium{
+    font-size: 1em;
+    margin:0;
+}
+
+.xlarge{
+    font-size: 2em;
+    margin:0;
+}
+
+.grey-text{
+    color: rgb(112 112 112)
+}
+
+/*---- UPDATE ----*/
+#update{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: left;
+}
+
+#update-button{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+    width:100%;
+}
+
+#update-date{
+    display: flex;
+    justify-content: left;
+}
+
+/*---- BUDGET MODAL SECTION ----*/
+.modal{
+    background-color: rgb(248 248 248);
+    border-radius: 5%;
+    padding:1em;
+    margin:1em;
+    width:100%;
+}
+
+#budget-modal-section{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-between;
+}
+
+.budget_modal{
+    display: flex;
+    flex-direction: column;
+    justify-content: left;
+    padding:1em;
+    width:100%;
+    margin:1em;
+}
+
+.budget_modal p{
+    margin:0.4em;
+}
+
+#week-categories{
+    display: flex;
+    flex-direction: column;
+}
+
+.budget-modal-category-div{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+/*---- SPENDING INCOME----*/
+.spending-income-bill-modal{
+    display: flex;
+    flex-direction: row;
+    width:100%;
+}
+
+#spending-income-bills-section{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.spending-cat-item{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: left;
+}
+
+.spending-cat-item img{
+    margin-right: 1em;
+}
+
+.spending-saving-icon{
+    width:1.5em;
+    height:1.5em;
+}
+
+#spending-income-bills-section{
+    display: flex;
+    flex-direction: row;
+}
+
+.graph-div{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/*---- BILLS----*/
+#bill-check{
+    display: flex;
+    flex-direction: row;
+}
+
+.bill-icon{
+    height:5em;
+    width:5em;
+    margin-right:1em;
+}
+
+.bill-item{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.bill-item-text{
+    display: flex;
+    flex-direction: column;
+}
+
+/*---- LOADERS ----*/
+.icon{
+    width:1em;
+    height:1em;
+}
+
+.update_monthly_loader {
+  display: inline-block;
+  width: 2em;
+  height: 2em;
+}
+
+.update_monthly_loader:after {
+  content: " ";
+  display: block;
+  width: 1em;
+  height: 1em;
+  margin: 8px;
+  border-radius: 50%;
+  border: 0.2em solid rgb(182 203 158);
+  border-color: rgb(182 203 158) transparent rgb(182 203 158) transparent;
+  animation: update_monthly_loader 1.2s linear infinite;
+}
+
+@keyframes update_monthly_loader {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------MONTHLY RECAP ---------*/
+#monthly_recap_graph{
+    display: flex;
+    flex-direction: column;
+}
+
+/* --------navbar ---------*/
+#monthly_recap_div{
+    display:flex;
+    flex-direction: column;
+    flex-grow:1;
+}
+
+#monthly_recap_navbar{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    margin: 2rem 0 0 0;
+}
+
+#monthly_recap_navbar a{
+    text-decoration: none;
+}
+
+#monthly_recap_navbar a:hover{
+    cursor: pointer;
+}
+
+/* -------- monthly_recap_amounts ---------*/
+#update-div{
+    margin: 1rem 0 0 1rem;
+}
+
+.month_div{
+    display:flex;
+    flex-direction: column;
+    width:90%;
+    padding:2rem;
+}
+
+.top-date p{
+    font-weight:bold;
+    margin: 0 0 0 0;
+}
+
+.monthly_recap_amounts{
+    display:flex;
+    flex-direction: row;
+}
+
+.summary_category{
+    display: flex;
+    flex-direction: column;
+    margin: 0 1rem 0 0;
+    flex-grow:1;
+}
+
+.category-name{
+    font-weight:500;
+}
+
+.summary_item{
+    display:flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    flex-grow:1;
+    max-height:40px
+}
+
+.summary_item p{
+    width:100%;
+    /*margin-right:1rem;*/
+
+    margin: 0 1rem 0.5rem 0
+}
+
+.summary-title{
+    flex-grow: 2;
+    min-width:7rem;
+}
+
+.summary-number{
+    flex-grow:1;
+}
+
+.positive-number{
+    color: red;
+}
+
+.negative-number{
+    color:green;
+}
+
+/* -------- monthly_recap_graphs ---------*/
+#monthly_recap_graphs_content{
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    padding: 1rem;
+}
+
+.graph-modal{
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 30vw;
+}
+
+.graph-div-monthly-recap{
+    display:flex;
+    flex: 1 1 20vw;
+}

@@ -13,7 +13,7 @@ class BudgetHandler:
     def __init__(self):
         self.bbva_scraper = BBVAScraper(headless=False)
         self.mongo_handler = MongoHandler()
-        self.salary = 1733.84
+        self.salary = 2477.89
         self.savings = 200
 
     def res_dictionary_to_df(self, res_dictionary):
@@ -88,6 +88,7 @@ class BudgetHandler:
             ) == 0, f"weekday of first date is not monday {first_d.weekday()}"
             if first_d.month > start_month:
                 break
+
             last_d = first_d + relativedelta(days=6)
             assert last_d.weekday(
             ) == 6, f"weekday of first date is not monday {last_d.weekday()}"
@@ -97,7 +98,7 @@ class BudgetHandler:
 
             date = last_d + relativedelta(days=1)
 
-            if last_d.month > start_month:
+            if last_d.month > start_month or (start_month == 12 and last_d.month == 1):
                 cont = False
 
         return weeks
@@ -110,9 +111,12 @@ class BudgetHandler:
 
     def get_remaining_weeks(self, weeks_in_month):
         current_date = datetime.today().date()
+        delta_m = 1 if current_date.month != 12 else -11
+        delta_y = 0 if current_date.month != 12 else 1
         last_day_next_month = current_date\
-            .replace(month=current_date.month + 1)\
-            .replace(day=1)
+            .replace(day=1)\
+            .replace(year=current_date.year + delta_y)\
+            .replace(month=current_date.month + delta_m)
 
         remaining_weeks = []
 
@@ -165,20 +169,20 @@ class BudgetHandler:
 
         old_current_month_object = list(self.mongo_handler.search_collection(
             self.mongo_handler.db_name,
-            self.mongo_handler.budget_history_collection,
+            self.mongo_handler.categories_history_collection,
             {"date": str(current_month_date)}
         ))
 
         if len(old_current_month_object) > 0:
             self.mongo_handler.delete_values(
                 self.mongo_handler.db_name,
-                self.mongo_handler.budget_history_collection,
+                self.mongo_handler.categories_history_collection,
                 {"_id": old_current_month_object[0].get("_id")}
             )
 
         self.mongo_handler.insert_value(
             self.mongo_handler.db_name,
-            self.mongo_handler.budget_history_collection,
+            self.mongo_handler.categories_history_collection,
             [new_current_month]
         )
 
@@ -203,13 +207,16 @@ class BudgetHandler:
 
         spending = []
         income = []
+
         for vector in month_dict:
-            if vector.get("name") in ["_id", "data_time"]:
+            if vector.get("name") in ["_id", "data_time", "Compra valores"]:
                 continue
             elif vector.get("name") in ["Ingreso Bizum",
                                         "Pendiente de categorizar ingresos",
                                         "other income",
-                                        "Nómina", "Transferencia recibida"]:
+                                        "Nómina", "Transferencia recibida",
+                                        "Salarios, rentas y subsidios",
+                                        "Efectivo, transferencias y cheques"]:
                 income.append(vector)
             else:
                 spending.append(vector)
@@ -235,13 +242,16 @@ class BudgetHandler:
         budget_amounts = self.get_weekly_budget(net_salary, remaining_weeks)
         return budget_amounts
 
-    def get_last_month_bills(self, history_df, current_month_date):
-        last_month_date = current_month_date - relativedelta(months=1)
+    def get_avg_monthly_bills(self, history_df, current_month_date):
+        past_3_months_dates = [current_month_date - relativedelta(months=delta_t) for delta_t in [1, 2, 3]]
+        past_3_months_amounts = []
 
-        last_month_df = history_df.loc[history_df["date"] == str(
-            last_month_date)].to_dict()
+        for month in past_3_months_dates:
+            last_month_df = history_df.loc[history_df["date"] == str(
+                month)].to_dict()
+            past_3_months_amounts.append(list(last_month_df.get("Hogar").values())[0])
 
-        return list(last_month_df.get("Hogar").values())[0]
+        return round(sum(past_3_months_amounts) / len(past_3_months_amounts), 2)
 
     def add_bills_if_empty(self, item_list, hogar_icon):
         for item in item_list:
@@ -256,19 +266,28 @@ class BudgetHandler:
 
         return item_list
 
+    def add_adjustments(self, month_dictionary, dates=None):
+        adjustments = self.mongo_handler.get_adjustments(dates)
+        for adjustment in adjustments:
+            for month in month_dictionary:
+                if adjustment["Date"] in month["date"] and adjustment["Category"] in month.keys():
+                    month[adjustment["Category"]] += adjustment["Amount"]
+        return month_dictionary
+
     def get_monthly_budget(self):
         print("Get Monthly Budget")
 
         current_month_date = datetime.today().date().replace(day=1)
         current_month_date_string = str(current_month_date)
-        res = self.mongo_handler.get_budget_history()
-        budget_history_df = self.res_dictionary_to_df(res)
+        res = self.mongo_handler.get_categories_history()
+        adjusted_res = self.add_adjustments(res)
+        budget_history_df = self.res_dictionary_to_df(adjusted_res)
 
         current_month_amounts_and_icons, category_df = self\
             .get_current_month_amounts_and_icons(budget_history_df,
                                                  current_month_date_string)
 
-        last_month_bills = self.get_last_month_bills(budget_history_df,
+        last_month_bills = self.get_avg_monthly_bills(budget_history_df,
                                                      current_month_date)
 
         if len(current_month_amounts_and_icons) == 0:
@@ -407,7 +426,7 @@ class BudgetHandler:
         return final_output
 
     def get_monthly_recap_graphs(self, monthly_recap_dict):
-        pprint(monthly_recap_dict)
+
         res_dict = {}
         for month, month_dict in monthly_recap_dict.items():
             flattened_dict = month_dict.get(
@@ -433,7 +452,11 @@ class BudgetHandler:
         return formatted_res
 
     def get_monthly_recap(self):
-        monthly_expenses_dict = self.mongo_handler.get_budget_history()
+        from models.utils.date_utils import DateUtils
+
+        monthly_expenses_dict = self.mongo_handler.get_categories_history()
+        dates = [DateUtils.string_to_datetime(x.get("date")) for x in monthly_expenses_dict]
+        monthly_expenses_dict = self.add_adjustments(monthly_expenses_dict, dates)
 
         divided_income_and_spending = self.divide_monthly_income_and_spending(
             monthly_expenses_dict)

@@ -29,7 +29,7 @@
     </div>
     
 
-    <div id="budget-modal-section" total_spending="{{ total_spending }}">
+    <div id="budget-modal-section" total_spending="0">
         {% for week in budget %}
         <div class="budget_modal modal" id="week_{{ week.week }}" remaining_days="{{ week.remaining_days }}">
             <p class="medium">Week {{ week.week }}</p>

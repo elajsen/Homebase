@@ -43,7 +43,7 @@ class BBVAScraper:
         current_directory = os.getcwd()
 
         # Check if the "chromedriver" executable exists in the current directory
-        chromedriver_filename = "chromedriver"
+        chromedriver_filename = "chromedriver_125_x64"
         chromedriver_path = os.path.join(
             current_directory, chromedriver_filename)
 
@@ -130,12 +130,15 @@ class BBVAScraper:
         return formated_date
 
     def get_item_by_text(self, text):
-        item = self.driver.find_elements_by_xpath(
-            xpath=f"//*[contains(text(), '{text}')]")[0]
+        item = self.driver.find_element(
+            by=By.XPATH,
+            value=f"//*[contains(text(), '{text}')]")[0]
         return item
 
     def find_item_by_xpath_custom(self, tag, attribute, text):
-        return self.driver.find_element_by_xpath(xpath=f"//{tag}[@{attribute}='{text}']").click()
+        return self.driver.find_element(
+            by=By.XPATH,
+            value=f"//{tag}[@{attribute}='{text}']").click()
 
     # ----- WEBPAGE NAVIGATION -------
     def switch_to_iframe(self):
@@ -176,7 +179,7 @@ class BBVAScraper:
         element_month_text = date_el.get_attribute("innerHTML")
         month = re.findall(month_regex, element_month_text)[
             0].replace(".", "")
-        month = self.month_translation_dict.get(month)
+        month = self.month_translation_dict.get(month.strip())
 
         return date(year, month, day)
 
@@ -207,7 +210,6 @@ class BBVAScraper:
         return description.strip()
 
     def get_data_from_mov_element(self, mov_element):
-
         id = mov_element.get_attribute("data-movement-id")
         date = self.get_date_from_mov_element(mov_element)
         category = self.get_category_from_mov_element(mov_element)
@@ -258,10 +260,13 @@ class BBVAScraper:
         el[0].send_keys(self.username)
         el[1].send_keys(self.pswrd)
 
+        original_url = self.driver.current_url
         btn = self.find_elements_with_wait(
             by=By.XPATH,
             value="//*[@data-lit-component='button']")[0]
         btn.click()
+        if self.driver.current_url == original_url:
+            btn.click()
 
         tries = 0
         continue_ = True
@@ -288,10 +293,10 @@ class BBVAScraper:
         self.driver.get(start + "#dashboard/pfm/gastos")
 
     def go_to_movements(self):
-        if "#cuentas/1/ficha" in self.driver.current_url:
+        if "#cuentas/ES0182002000000000000000000490331664XXXXXXXXX/ficha" in self.driver.current_url:
             return
         start = self.driver.current_url.split("#")[0]
-        self.driver.get(start + "#cuentas/1/ficha")
+        self.driver.get(start + "#cuentas/ES0182002000000000000000000490331664XXXXXXXXX/ficha")
 
     def get_movements_from_page(self):
         tbody = self.find_element_with_wait(by=By.TAG_NAME, value="tbody")
@@ -301,12 +306,14 @@ class BBVAScraper:
 
     def filter_dates(self, date_from, date_until):
         btn = self.find_element_with_wait(by=By.XPATH, value="//div[@id='dateSimulationContainer']")\
-            .find_element_by_tag_name("i")
+            .find_element(by=By.TAG_NAME,
+                          value="i")
         time.sleep(1)
         btn.click()
 
-        inputs = self.driver.find_elements_by_xpath(
-            "//input[@aria-required='true']")
+        inputs = self.driver.find_elements(
+            by=By.XPATH,
+            value="//input[@aria-required='true']")
         desde = inputs[0]
         hasta = inputs[1]
 
@@ -317,8 +324,9 @@ class BBVAScraper:
         hasta.send_keys(date_until)
         time.sleep(2)
 
-        btn = self.driver.find_element_by_xpath(
-            "//span[text()[contains(., 'Filtrar por fecha')]]")
+        btn = self.driver.find_element(
+            by=By.XPATH,
+            value="//span[text()[contains(., 'Filtrar por fecha')]]")
         btn.click()
         try:
             btn.click()
@@ -332,33 +340,49 @@ class BBVAScraper:
             return float(res[0])
 
         def get_income():
-            amount_divs = self.find_elements_with_wait(By.XPATH,
-                                                       "//div[contains(@class, 'tableTotalAmounts')]")
+            amount_divs = self\
+                .find_elements_with_wait(
+                    By.XPATH,
+                    "//div[contains(@class, 'tableTotalAmounts')]")
             to_check = 1
-            amount_divs[to_check].find_element_by_tag_name(
-                "dt").get_attribute("innerHTML")
-            amount = amount_divs[to_check].find_element_by_tag_name("dd")\
-                .find_element_by_xpath(".//span[@class='sr-only']").get_attribute("innerHTML")
+            amount_divs[to_check].find_element(
+                by=By.TAG_NAME,
+                value="dt").get_attribute("innerHTML")
+            amount = amount_divs[to_check].find_element(
+                by=By.TAG_NAME,
+                value="dd")\
+                .find_element(
+                    by=By.XPATH,
+                    value=".//span[@class='sr-only']").get_attribute("innerHTML")
             cleaned_amount = amount.replace(
                 ".", "").replace(",", ".").replace("€", "")
             return float(cleaned_amount)
 
         res = {}
-        category_cards = self.find_elements_with_wait(
-            by=By.XPATH,
-            value="//div[@data-cy-id='card-icon']")
+        try:
+            category_cards = self.find_elements_with_wait(
+                by=By.XPATH,
+                value="//div[@data-cy-id='card-icon']")
+        except:
+            print("Couldnt find any spending or income")
+            return res
 
         for card in category_cards:
-            category = card.find_element_by_tag_name(
-                "h3").get_attribute("innerHTML")
-            amt_card = card.find_element_by_xpath(
-                xpath=".//span[@data-cy-id='data-amount']")
-            amount = amt_card.find_element_by_xpath(
-                xpath=".//span[@class='sr-only']").get_attribute("innerHTML")
+            category = card.find_element(
+                by=By.TAG_NAME,
+                value="h3").get_attribute("innerHTML")
+            amt_card = card.find_element(
+                by=By.XPATH,
+                value=".//span[@data-cy-id='data-amount']")
+            amount = amt_card.find_element(
+                by=By.XPATH,
+                value=".//span[@class='sr-only']").get_attribute("innerHTML")
             res[category] = string_to_float(amount)
 
-        res["other income"] = round(get_income() - res.get("Nómina", 0), 2)
-
+        to_delete_from_full_income = ["Nómina", "Ingreso Bizum", "Ingresos en efectivo",
+                                      "Efectivo, transferencias y cheques", "Salarios, rentas y subsidios"]
+        print(res)
+        res["other income"] = round(get_income() - sum([res.get(cat, 0) for cat in to_delete_from_full_income]), 2)
         return res
 
     def filter_for_current_month(self):
@@ -375,7 +399,6 @@ class BBVAScraper:
 
         start = self.find_element_with_wait(by=By.XPATH,
                                             value="//input[@name='filtros.fechas.inicio']")
-        print(start)
         time.sleep(5)
         start.clear()
         start.send_keys(formated_start_date)
@@ -415,9 +438,9 @@ class BBVAScraper:
         self.go_to_movements()
 
         retentions = self.get_retentions()
-        categories["Retentions"] = retentions
+        if retentions != 0:
+            categories["Retentions"] = retentions
 
-        # self.driver.quit()
         return categories
 
     def get_backlog_month_categories(self):
@@ -443,8 +466,12 @@ class BBVAScraper:
         return res_dict
 
     def get_retentions(self):
-        retention_element = self.find_element_with_wait(by=By.CLASS_NAME,
-                                                        value="c-encabezado-descripcionProducto__retenciones-amount")
+        try:
+            retention_element = self.find_element_with_wait(by=By.CLASS_NAME,
+                                                            value="c-encabezado-descripcionProducto__retenciones-amount")
+        except:
+            print("No retention")
+            return 0
 
         retention = retention_element.get_attribute("innerHTML")\
             .replace("€", "").replace("-", "").replace(",", ".")
@@ -469,9 +496,7 @@ class BBVAScraper:
         columns = ["id", "date", "description", "concept",
                    "category", "amount"]
         for index, mov in enumerate(movement_elements):
-            print(f"Element: {index}")
             mov_data = self.get_data_from_mov_element(mov)
-            print(mov_data)
 
             data.append([
                 mov_data.get("id"),

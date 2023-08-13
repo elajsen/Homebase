@@ -1,0 +1,54 @@
+{% extends "main_page/index.html" %}
+
+{% block main_content %}
+<div id="create_user">
+    <button class="test_btn" action="create_account">Create User</button>
+    <button class="test_btn" action="delete_account">Delete User</button>
+    <button class="test_btn" action="login_user">Login User</button>
+    <button class="test_btn" action="logout_user">Logout User</button>
+
+    {% if user.is_authenticated %}
+    <p>You are logged in</p>
+    {% endif %}
+</div>
+
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+            break;
+            }
+        }
+        }
+        return cookieValue;
+    }
+    $(".test_btn").on("click", function(){
+        let action = $(this).attr("action")
+
+        const csrftoken = getCookie("csrftoken");
+        $.ajaxSetup({
+            headers: {
+                "X-CSRFToken": csrftoken
+            }
+        });
+        $.ajax({
+            url: "/account/",
+            method: "POST",
+            data: {
+                "type": action
+            },
+            success: function(response){
+                console.log("SUCCESS")
+            },
+            error: function(xhr, status, error){
+                console.log(xhr)
+            }
+        })
+    })
+</script>
+{% endblock %}

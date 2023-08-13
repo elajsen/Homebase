@@ -1,10 +1,13 @@
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
 import pymongo
+from bson.objectid import ObjectId
 from datetime import datetime
 from django.conf import settings
-
 import pandas as pd
+from pandas import DataFrame
+from datetime import date
+from models.utils.date_utils import DateUtils
+from dateutil.relativedelta import relativedelta
+from typing import Union, Dict, List, Any
 
 
 class MongoHandler:
@@ -14,10 +17,11 @@ class MongoHandler:
 
         self.db_name = "Homebase"
 
-        self.budget_history_collection = "budget_history"
+        self.categories_history_collection = "budget_history"
         self.budget_current_week = "budget_current_week"
-        self.budget_movements = "budget_movements"
+        self.categories_movements = "budget_movements"
         self.budget_icons = "budget_icons"
+        self.budget_monthly_adjustments = "budget_adjustments"
 
         self.bills = "bills"
 
@@ -27,7 +31,7 @@ class MongoHandler:
     def update_budget_movements(self, movements):
         assert isinstance(
             movements, pd.DataFrame), f"type {type(movements)} should be pd.DataFrame"
-        old_df = self.get_budget_movements()
+        old_df = self.get_categories_movements()
 
         if "_id" in old_df.columns:
             old_df = old_df.drop(columns=["_id"])
@@ -37,15 +41,15 @@ class MongoHandler:
         new_df = old_df.append(movements).drop_duplicates(subset=["id"])
         df_dict = new_df.to_dict("records")
 
-        self.delete_collection(self.db_name, self.budget_movements)
-        self.client[self.db_name][self.budget_movements]\
+        self.delete_collection(self.db_name, self.categories_movements)
+        self.client[self.db_name][self.categories_movements]\
             .insert_many(df_dict)
         print("Updated budget movements")
 
     def update_budget_history(self, history):
-        self.delete_collection(self.db_name, self.budget_history_collection)
+        self.delete_collection(self.db_name, self.categories_history_collection)
         self.insert_value(
-            self.db_name, self.budget_history_collection, history)
+            self.db_name, self.categories_history_collection, history)
         print("Updated budget history")
 
     def update_budget_current_week(self, history):
@@ -73,25 +77,48 @@ class MongoHandler:
             structured_history.append(value)
         return structured_history
 
-    def get_budget_history(self):
+    def get_categories_history(self):
         history = self.get_collection(
-            self.db_name, self.budget_history_collection)
+            self.db_name, self.categories_history_collection)
         return list(history)
 
-    def get_budget_current_week(self):
+    def get_categories_month(self, month:date) -> DataFrame:
+        month = self.search_collection(
+            self.db_name, self.categories_history_collection, {"date": str(month)})
+        return list(month)[0]
+
+    def get_categories(self, dates: Union[date, List[date]]) -> List[Dict[str, Any]]:
+        if isinstance(dates, date):
+            query = {"date": str(dates)}
+        elif isinstance(dates, list):
+            query = {"date": {"$in": [str(_date) for _date in dates]}}
+        res = self.search_collection(
+            self.db_name, self.categories_history_collection, query
+        )
+        return list(res)
+
+    def get_categories_current_week(self):
         history = self.get_collection(
-            self.db_name, self.budget_current_week)
+            self.db_name, self.categories_current_week)
         return self.structure_budget_history(history)
 
-    def get_budget_movements(self):
+    def get_categories_movements(self):
         movements = self.get_collection(
-            self.db_name, self.budget_movements
+            self.db_name, self.categories_movements
         )
         df = self.mongo_return_to_df(movements)
         df["date"] = pd.to_datetime(df["date"])
         df = df.drop_duplicates(subset=["id"])
 
         return df
+
+    def get_current_month_budget_movements(self, month:date):
+        movements = self.search_collection(
+            self.db_name, self.categories_movements,
+            {"date": {"$gte": DateUtils.date_to_datetime(month.replace(day=1)),
+                      "$lt": DateUtils.date_to_datetime(month.replace(day=1) + relativedelta(months=1))}}
+        )
+        return list(movements)
 
     def get_budget_icons(self):
         icons_dict = self.get_collection(
@@ -103,7 +130,40 @@ class MongoHandler:
         icons_dict = self.get_collection(
             self.db_name, self.bills
         )
-        return list(icons_dict)[0]
+        res = list(icons_dict)
+        if len(res) == 0:
+            print("Bills database is empty")
+        else:
+            return res[0]
+
+    def get_monthly_bills(self, month:date):
+        bills = self.get_bills()
+        for key in bills.keys():
+            if key not in  ["_id", "data_time"]:
+                bill_category = bills[key]
+                filtered_bills = {key:val for key, val in bill_category.items() if str(month)[:7] in key}
+                bills[key] = filtered_bills
+        return bills
+
+    def get_adjustments(self, months: Union[date, List[date]]) -> DataFrame:
+        if isinstance(months, date):
+            query = {"Date": str(months)[:7]}
+        elif isinstance(months, list):
+            query = {"Date": {"$in": [str(month)[:7] for month in months]}}
+        else:
+            raise Warning(f"Months parameter is not of expected type: Union[date, List[date]]. Found: {months}")
+
+        adjustments_dict = self.search_collection(
+            self.db_name, self.budget_monthly_adjustments,
+            query
+        )
+        return list(adjustments_dict)
+    
+    def get_monthly_adjustments(self, month:date):
+        adjustments_dict = self.search_collection(
+            self.db_name, self.budget_monthly_adjustments,
+            {"Date": str(month)[:7]})
+        return list(adjustments_dict)
 
     def add_insertion_date(self, values):
         time = datetime.now().replace(microsecond=0)
@@ -115,6 +175,9 @@ class MongoHandler:
         assert isinstance(values, list), "Values must be in list"
         assert isinstance(values[0], dict), "Items must be dict"
 
+        if isinstance(values, pd.DataFrame):
+            values = values.to_dict("records")
+
         values_with_date = self.add_insertion_date(values)
 
         try:
@@ -124,7 +187,7 @@ class MongoHandler:
             print("Couldn't insert item")
             print(str(e))
 
-    def delete_values(self, db, collection, objects):
+    def delete_values(self, db: str, collection: str, objects: Dict[str, ObjectId]) -> None:
         assert len(objects) > 0, "Object ids list is empty..."
         try:
             self.client[db][collection].delete_many(objects)

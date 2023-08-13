@@ -1,15 +1,20 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 
 # Models
 from models.budget_handler import BudgetHandler
-from models.mongo_handler import MongoHandler
 from models.bill_handler import BillHandler
+
+from models.budget.month import Month
+from models.budget.year import Year
+from models.budget.person import Person
+from models.requests.request_utils import get_request
 
 # Create your views here.
 from django.shortcuts import render
+
 from pprint import pprint
 
 
@@ -22,6 +27,9 @@ def budget(request):
     print("budget")
     budget_handler = BudgetHandler()
     bill_handler = BillHandler()
+
+    m = Month(str(datetime.today().date()))
+    p = Person()
 
     if request.method == "POST":
         print("Post request")
@@ -36,57 +44,22 @@ def budget(request):
             print("Update bills")
             bill_handler.update_dates()
 
-        current_budget = budget_handler.get_monthly_budget()
-        monthly_bills = bill_handler.get_dates()
+        res = get_request("budget", request.method, m, p)
 
-        context = {
-            "budget": current_budget.get("week_dict"),
-            "total_spending": current_budget.get("total_spending"),
-            "current_month_spending": current_budget.get("current_month_categories"),
-            "salary": budget_handler.salary,
-            "savings": budget_handler.savings,
-            "bills": monthly_bills,
-            "data_time": current_budget.get("data_time")
-        }
-
-        return JsonResponse(context)
+        return JsonResponse(res)
 
     elif request.method == "GET":
         print("Get request")
-        # current_budget = list(mongo_handler.get_budget_current_week())
-        current_budget = budget_handler.get_monthly_budget()
-        monthly_bills = bill_handler.get_dates()
-        if request.GET.get("type", None) == "app":
-            print("APP ACCESSING")
-            context = {
-                "budget": current_budget.get("week_dict"),
-                "total_spending": current_budget.get("total_spending"),
-                "current_month_spending": current_budget.get("current_month_categories"),
-                "salary": budget_handler.salary,
-                "savings": budget_handler.savings,
-                "bills": monthly_bills,
-                "data_time": current_budget.get("data_time")
-            }
-            return JsonResponse(context)
 
-    context = {
-        "current_month": str(datetime.today().date())[:7],
-        "budget": current_budget.get("week_dict"),
-        "total_spending": current_budget.get("total_spending"),
-        "current_month_spending": current_budget.get("current_month_categories"),
-        "salary": budget_handler.salary,
-        "savings": budget_handler.savings,
-        "bills": monthly_bills,
-        "data_time": current_budget.get("data_time"),
-        "last_month_bills": current_budget.get("last_month_bills")
-    }
-
-    return render(request, "main_page/budget.html", context)
+    res = get_request("budget", request.method, m, p)
+    pprint(res)
+    return render(request, "main_page/budget.html", res)
 
 
 def monthly_recap(request):
 
     budget_handler = BudgetHandler()
+    y = Year(str(datetime.now().date()))
 
     if request.method == "POST":
         if request.POST.get("type") == "update monthly recap":
@@ -97,7 +70,10 @@ def monthly_recap(request):
     if request.method == "GET":
         monthly_recap = budget_handler.get_monthly_recap()
         graph_data = budget_handler.get_monthly_recap_graphs(monthly_recap)
-    # pprint(graph_data)
+
+    from pprint import pprint
+    pprint(monthly_recap)
+
     context = {
         "monthly_recap": monthly_recap,
         "graph_data": graph_data
